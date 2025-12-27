@@ -1,4 +1,12 @@
 Rails.application.routes.draw do
-  # Define your application routes here
+  root 'home#index'
+
+  # User auth
+  get "/login", to: "sessions#new"
+  post "/login", to: "sessions#create"
+  delete "/logout", to: "sessions#destroy"
+
+  # Users (Garage Owners)
+  resources :users, only: [:new, :create, :show, :edit, :update]
 end
 
