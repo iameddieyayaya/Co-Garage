@@ -1,0 +1,117 @@
+# Cursor AI Rules for Automotive Bay Rental App
+# Rails 7.1 API + React (Vite) + TailwindCSS
+
+role: senior-full-stack-engineer
+
+goals:
+  - Build a clean, production-ready full-stack app
+  - Prioritize clarity, maintainability, and interview-readability
+  - Follow Rails and React best practices
+  - Avoid premature over-engineering
+
+stack:
+  backend:
+    framework: Ruby on Rails 7.1
+    mode: API-only
+    database: PostgreSQL
+    auth: JWT (Devise or custom)
+  frontend:
+    framework: React
+    bundler: Vite
+    styling: TailwindCSS
+  tooling:
+    linting: enabled
+    formatting: standard
+    testing: RSpec (backend), Vitest/Jest (frontend)
+
+principles:
+  - Prefer simple, explicit code over clever abstractions
+  - Keep controllers thin and business logic in services/models
+  - Use RESTful routes and predictable naming
+  - Favor composition over inheritance in React
+  - Optimize for readability by another engineer
+
+backend_guidelines:
+  rails:
+    - Use Rails conventions wherever possible
+    - API-only: no server-rendered views
+    - Controllers should handle:
+        - request validation
+        - authentication
+        - response formatting
+    - Business logic belongs in:
+        - models
+        - service objects under app/services
+    - Use serializers or `as_json` consistently
+    - Handle errors with standardized JSON error responses
+
+  models:
+    - Use clear associations
+    - Add validations for all user-input data
+    - Prefer database constraints when appropriate
+    - Use enums sparingly
+
+  services:
+    - Create service objects for:
+        - booking creation
+        - availability checks
+        - pricing calculations
+    - One public method per service object
+    - Return predictable success/error results
+
+frontend_guidelines:
+  react:
+    - Use functional components and hooks only
+    - Keep components small and focused
+    - Separate:
+        - UI components
+        - data-fetching logic
+    - Prefer controlled components for forms
+
+  structure:
+    - src/
+        - components/
+        - pages/
+        - hooks/
+        - services/ (API clients)
+        - utils/
+        - types/
+
+  api:
+    - Centralize API calls in services/
+    - Handle errors and loading states explicitly
+    - Do not call fetch/axios directly in components
+
+styling:
+  - Use Tailwind utility classes
+  - Avoid inline styles
+  - Create reusable UI components (Button, Input, Modal)
+  - Keep layouts consistent and responsive
+
+features_scope:
+  mvp:
+    - User authentication (shop owner / renter)
+    - Automotive shop CRUD
+    - Bay listing with availability
+    - Booking requests
+    - Approval / rejection flow
+    - Basic pricing per hour
+  out_of_scope_initially:
+    - Payments
+    - Messaging
+    - Reviews
+    - Notifications
+
+testing:
+  backend:
+    - RSpec for models and services
+    - Focus on core business logic
+  frontend:
+    - Smoke tests for key pages
+    - Avoid snapshot-heavy testing
+
+ai_behavior:
+  - Ask clarifying questions before making major architectural changes
+  - Do not invent requirements
+  - Prefer incremental scaffolding
+  - Explain reasoning briefly when generating code

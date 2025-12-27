@@ -1,0 +1,32 @@
+# Rails
+*.rbc
+capybara-*.html
+.rspec
+/log
+/tmp
+/db/*.sqlite3
+/db/*.sqlite3-journal
+/db/*.sqlite3-*
+/public/system
+/coverage/
+/spec/tmp
+*.orig
+rerun.txt
+pickle-email-*.html
+
+# Backend
+backend/tmp/
+backend/log/
+backend/.bundle/
+backend/vendor/bundle/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Environment
+.env
+.env.local
+.DS_Store
+
