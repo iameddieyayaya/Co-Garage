@@ -1,17 +1,16 @@
-function App() {
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
+import GarageOwnerSignup from "./pages/GarageOwnerSignup";
+import Dashboard from "./pages/Dashboard";
+
+export default function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold text-center text-gray-900">
-          Co-Garage
-        </h1>
-        <p className="text-center text-gray-600 mt-4">
-          Bay Rental Marketplace
-        </p>
-      </div>
-    </div>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/owners/signup" element={<GarageOwnerSignup />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
-
-export default App
-
