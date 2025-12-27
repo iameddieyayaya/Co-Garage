@@ -9,11 +9,18 @@ class Booking < ApplicationRecord
   validates :guest_name, :guest_email, presence: true, unless: -> { user.present? }
 
   validate :end_after_start
+  validate :must_be_paid, on: :create
 
   private
 
   def end_after_start
     return if end_time.blank? || start_time.blank?
     errors.add(:end_time, "must be after start time") if end_time <= start_time
+  end
+
+  def must_be_paid
+    if total_price.to_f > 0 && !paid
+      errors.add(:paid, "booking must be paid before it can be created")
+    end
   end
 end
