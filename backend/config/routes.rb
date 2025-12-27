@@ -8,5 +8,9 @@ Rails.application.routes.draw do
 
   # Users (Garage Owners)
   resources :users, only: [:new, :create, :show, :edit, :update]
+
+  resources :bookings do
+    post 'create_checkout_session', to: 'payments#create'
+  end
 end
 
