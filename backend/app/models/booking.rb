@@ -9,7 +9,7 @@ class Booking < ApplicationRecord
   validates :guest_name, :guest_email, presence: true, unless: -> { user.present? }
 
   validate :end_after_start
-  validate :must_be_paid, on: :create
+  validate :must_be_paid, on: :update
 
   private
 
@@ -19,8 +19,6 @@ class Booking < ApplicationRecord
   end
 
   def must_be_paid
-    if total_price.to_f > 0 && !paid
-      errors.add(:paid, "booking must be paid before it can be created")
-    end
+    errors.add(:paid, "must be paid before booking is confirmed") unless paid?
   end
 end

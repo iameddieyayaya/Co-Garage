@@ -1,16 +1,11 @@
 Rails.application.routes.draw do
-  root 'home#index'
-
-  # User auth
-  get "/login", to: "sessions#new"
-  post "/login", to: "sessions#create"
-  delete "/logout", to: "sessions#destroy"
-
-  # Users (Garage Owners)
-  resources :users, only: [:new, :create, :show, :edit, :update]
-
-  resources :bookings do
-    post 'create_checkout_session', to: 'payments#create'
+  namespace :api do
+    namespace :v1 do
+      post 'auth/login', to: 'auth#login'
+      post 'auth/register', to: 'auth#register'
+      get 'auth/me', to: 'auth#me'
+      resources :users, only: [:create]
+    end
   end
 end
 

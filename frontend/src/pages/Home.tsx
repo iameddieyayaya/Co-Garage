@@ -4,18 +4,6 @@ import { Link } from 'react-router-dom';
 const Home: React.FC = () => {
     return (
         <div className="font-sans text-gray-100 bg-slate-900">
-          {/* Navbar */}
-          <header className="bg-slate-900 fixed w-full z-50 shadow-lg">
-            <div className="max-w-7xl mx-auto px-4 py-5 flex justify-between items-center">
-              <h1 className="text-2xl font-extrabold text-blue-500 tracking-widest">CoGarage</h1>
-              <nav className="space-x-6">
-                <a href="#features" className="hover:text-blue-500 font-semibold transition">Features</a>
-                <a href="#how-it-works" className="hover:text-blue-500 font-semibold transition">How It Works</a>
-                <Link to="/owners/signup" className="bg-blue-500 text-gray-900 px-5 py-2 rounded-full font-bold hover:bg-blue-600 transition">Sign Up</Link>
-              </nav>
-            </div>
-          </header>
-    
           {/* Hero */}
           <section className="relative h-screen flex items-center justify-center text-center bg-black">
             <img

@@ -1,6 +1,7 @@
 import axios from 'axios';
+import type { User } from '../types';
 
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = '/api/v1';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -9,17 +10,18 @@ const api = axios.create({
   },
 });
 
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 export interface SignupData {
   name: string;
   email: string;
   password: string;
-}
-
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
 }
 
 export interface SignupResponse {
@@ -31,6 +33,21 @@ export const userApi = {
     const response = await api.post<SignupResponse>('/users', {
       user: data,
     });
+    return response.data;
+  },
+};
+
+export const authAPI = {
+  login: async (email: string, password: string) => {
+    const response = await api.post('/auth/login', { email, password });
+    return response.data;
+  },
+  register: async (data: { email: string; password: string; role: string; name?: string }) => {
+    const response = await api.post('/auth/register', { user: data });
+    return response.data;
+  },
+  me: async (): Promise<{ user: User }> => {
+    const response = await api.get('/auth/me');
     return response.data;
   },
 };

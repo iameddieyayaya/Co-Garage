@@ -9,7 +9,7 @@ alice = User.find_or_create_by!(email: "alice@example.com") do |user|
   user.name = "Alice Garage"
   user.password = "password123"
   user.password_confirmation = "password123"
-  user.role = :owner
+  user.role = :shop_owner
 end
 
 puts "✅ User: #{alice.email}"
