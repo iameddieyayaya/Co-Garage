@@ -20,12 +20,11 @@ const Navbar = () => {
               <Link to="/dashboard" className="hover:text-blue-500 font-semibold transition text-gray-100">
                 Dashboard
               </Link>
-              <span className="text-gray-100">{user?.email}</span>
               <button
                 onClick={handleLogout}
-                className="bg-red-500 text-white px-5 py-2 rounded-full font-bold hover:bg-red-600 transition"
+                className="bg-blue-500 text-gray-900 px-5 py-2 rounded-full font-bold hover:bg-blue-600 transition"
               >
-                Logout
+                Sign Out
               </button>
             </>
           ) : (

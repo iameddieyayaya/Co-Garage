@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { userApi } from "../services/api";
 
 const GarageOwnerSignup: React.FC = () => {
@@ -140,7 +140,14 @@ const GarageOwnerSignup: React.FC = () => {
           </div>
 
           <p className="mt-8 text-xs text-gray-500 text-center">
-            By signing up, you agree to CoGarage’s Terms & Privacy Policy.
+            By signing up, you agree to CoGarage's Terms & Privacy Policy.
+          </p>
+
+          <p className="mt-4 text-sm text-gray-400 text-center">
+            Already have an account?{" "}
+            <Link to="/login" className="text-orange-500 hover:text-orange-400 underline">
+              Login
+            </Link>
           </p>
         </div>
       </div>
