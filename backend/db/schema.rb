@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_12_27_175200) do
+ActiveRecord::Schema[7.1].define(version: 2025_12_28_012821) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -51,14 +51,14 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_27_175200) do
   end
 
   create_table "shops", force: :cascade do |t|
-    t.bigint "user_id", null: false
+    t.bigint "owner_id", null: false
     t.string "name"
     t.string "location"
     t.text "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "active"
-    t.index ["user_id"], name: "index_shops_on_user_id"
+    t.index ["owner_id"], name: "index_shops_on_owner_id"
   end
 
   create_table "tools", force: :cascade do |t|
@@ -86,6 +86,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_27_175200) do
   add_foreign_key "booking_tools", "tools"
   add_foreign_key "bookings", "bays"
   add_foreign_key "bookings", "users"
-  add_foreign_key "shops", "users"
+  add_foreign_key "shops", "users", column: "owner_id"
   add_foreign_key "tools", "shops"
 end

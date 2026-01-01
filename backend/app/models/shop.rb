@@ -1,5 +1,5 @@
 class Shop < ApplicationRecord
-  belongs_to :user
+  belongs_to :owner, class_name: "User"
   has_many :bays, dependent: :destroy
   has_many :tools, dependent: :destroy
   has_many :bookings, through: :bays

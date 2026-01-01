@@ -1,5 +1,7 @@
 class User < ApplicationRecord
   has_secure_password
+  has_one :shop, foreign_key: :owner_id, dependent: :destroy
+
 
   enum role: {
     shop_owner: 0
