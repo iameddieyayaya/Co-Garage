@@ -8,6 +8,13 @@ Rails.application.routes.draw do
       get 'auth/me', to: 'auth#me'
       resources :bays, only: [:create, :index, :show]
       resources :tools, only: [:create, :index, :show]
+      resources :bookings, only: [:create]
+
+      namespace :public do
+        resources :shops, only: [:index]
+        resources :bays, only: [:index]
+        resources :tools, only: [:index]
+      end
       resources :users, only: [:create]
     end
   end

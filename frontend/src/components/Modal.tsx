@@ -8,36 +8,45 @@ interface ModalProps {
 	children: ReactNode;
 	actionText?: string;
 	onAction?: () => void;
+	actionDisabled?: boolean;
+	panelClassName?: string;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, actionText = "Close", onAction }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, actionText = "Close", onAction, actionDisabled = false, panelClassName }) => {
 	return (
 		<Dialog open={isOpen} onClose={onClose} className="relative z-50">
 			{/* Overlay */}
 			<DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity dark:bg-gray-900/50" />
 
 			{/* Modal panel */}
-			<div className="fixed inset-0 flex items-end justify-center p-4 text-center sm:items-center sm:p-0">
-				<DialogPanel className="relative transform overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-6 dark:bg-gray-800 dark:outline dark:-outline-offset-1 dark:outline-white/10">
+			<div className="fixed inset-0 overflow-y-auto">
+				<div className="min-h-full flex items-end justify-center p-4 text-center sm:items-center">
+				<DialogPanel
+					className={`relative transform rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-6 dark:bg-gray-800 dark:outline dark:-outline-offset-1 dark:outline-white/10 flex flex-col max-h-[calc(100vh-2rem)] ${
+						panelClassName || ""
+					}`}
+				>
 					{/* Title */}
 					<DialogTitle as="h3" className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
 						{title}
 					</DialogTitle>
 
 					{/* Content */}
-					<div className="mb-4">{children}</div>
+					<div className="flex-1 overflow-y-auto pr-1">{children}</div>
 
 					{/* Action button */}
-					<div className="mt-4 sm:mt-6">
+					<div className="mt-4 sm:mt-6 shrink-0">
 						<button
 							type="button"
 							onClick={onAction ? onAction : onClose}
-							className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:bg-indigo-500 dark:shadow-none dark:hover:bg-indigo-400 dark:focus-visible:outline-indigo-500"
+							disabled={actionDisabled}
+							className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:bg-indigo-500 dark:shadow-none dark:hover:bg-indigo-400 dark:focus-visible:outline-indigo-500"
 						>
 							{actionText}
 						</button>
 					</div>
 				</DialogPanel>
+			</div>
 			</div>
 		</Dialog>
 	);

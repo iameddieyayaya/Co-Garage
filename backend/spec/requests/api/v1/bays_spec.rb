@@ -5,6 +5,22 @@ RSpec.describe "Api::V1::Bays", type: :request do
   let(:token) { JwtService.encode({ user_id: user.id }) }
   let(:headers) { { "Authorization" => "Bearer #{token}" } }
 
+  describe "GET /public index" do
+    it "lists available bays for a shop without auth" do
+      shop = Shop.create!(owner: user, name: "Main Garage", location: "Austin, TX", active: true)
+      available = shop.bays.create!(description: "Bay 1", hourly_rate: 20, available: true)
+      shop.bays.create!(description: "Bay 2", hourly_rate: 10, available: false)
+
+      get "/api/v1/public/bays", params: { shop_id: shop.id }
+
+      expect(response).to have_http_status(:ok)
+      body = response.parsed_body
+      expect(body.length).to eq(1)
+      expect(body[0]["id"]).to eq(available.id)
+      expect(body[0]["shop"]["id"]).to eq(shop.id)
+    end
+  end
+
   describe "GET /index" do
     it "returns 401 when unauthenticated" do
       get "/api/v1/bays"

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Bay, Shop, Tool, User } from '../types';
+import type { Bay, PublicBay, PublicShop, PublicTool, Shop, Tool, User } from '../types';
 
 const API_BASE_URL = '/api/v1';
 
@@ -100,6 +100,52 @@ export const toolsAPI = {
   },
   list: async (): Promise<Tool[]> => {
     const response = await api.get<Tool[]>('/tools')
+    return response.data
+  },
+}
+
+export const publicBaysAPI = {
+  list: async (shop_id?: number): Promise<PublicBay[]> => {
+    const response = await api.get<PublicBay[]>('/public/bays', { params: { shop_id } })
+    return response.data
+  },
+}
+
+export const publicToolsAPI = {
+  list: async (shop_id?: number): Promise<PublicTool[]> => {
+    const response = await api.get<PublicTool[]>('/public/tools', { params: { shop_id } })
+    return response.data
+  },
+}
+
+export const publicShopsAPI = {
+  list: async (): Promise<PublicShop[]> => {
+    const response = await api.get<PublicShop[]>('/public/shops')
+    return response.data
+  },
+}
+
+export type BookingDuration = 'half' | 'full'
+export type BookingSlot = 'morning' | 'afternoon'
+
+export interface CreateGuestBookingTool {
+  tool_id: number
+  quantity: number
+}
+
+export interface CreateGuestBookingData {
+  bay_id: number
+  guest_name: string
+  guest_email: string
+  rental_date: string
+  duration: BookingDuration
+  slot?: BookingSlot
+  tools?: CreateGuestBookingTool[]
+}
+
+export const bookingsAPI = {
+  createGuest: async (data: CreateGuestBookingData) => {
+    const response = await api.post('/bookings', { booking: data })
     return response.data
   },
 }

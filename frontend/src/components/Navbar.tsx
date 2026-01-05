@@ -15,6 +15,9 @@ const Navbar = () => {
           CoGarage
         </Link>
         <nav className="space-x-6 flex items-center">
+          <Link to="/book" className="hover:text-blue-500 font-semibold transition text-gray-100">
+            Book
+          </Link>
           {isAuthenticated ? (
             <>
               <Link to="/dashboard" className="hover:text-blue-500 font-semibold transition text-gray-100">
@@ -43,4 +46,3 @@ const Navbar = () => {
 }
 
 export default Navbar
-

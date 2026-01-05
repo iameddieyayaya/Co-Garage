@@ -32,3 +32,38 @@ export interface Tool {
   day_rate: number | string | null
   available: boolean | null
 }
+
+export interface PublicShopSummary {
+  id: number
+  name: string
+  location: string
+}
+
+export interface PublicShop {
+  id: number
+  name: string
+  location: string
+  description: string | null
+  available_bays_count: number
+  starting_hourly_rate: number | string | null
+  available_tools_count: number
+}
+
+export interface PublicBay {
+  id: number
+  shop_id: number
+  hourly_rate: number | string | null
+  description: string | null
+  available: boolean | null
+  shop: PublicShopSummary
+}
+
+export interface PublicTool {
+  id: number
+  shop_id: number
+  name: string | null
+  description: string | null
+  day_rate: number | string | null
+  available: boolean | null
+  shop: PublicShopSummary
+}

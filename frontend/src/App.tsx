@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import GarageOwnerSignup from "./pages/GarageOwnerSignup";
 import Dashboard from "./pages/Dashboard";
 import ShopOnboarding from "./pages/ShopOnboarding";
+import Booking from "./pages/Booking";
 import RequireAuth from "./components/RequireAuth";
 
 export default function App() {
@@ -16,6 +17,7 @@ export default function App() {
         <main>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/book" element={<Booking />} />
             <Route path="/login" element={<Login />} />
             <Route path="/owners/signup" element={<GarageOwnerSignup />} />
             <Route
