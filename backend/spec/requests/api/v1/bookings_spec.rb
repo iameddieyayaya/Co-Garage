@@ -29,6 +29,7 @@ RSpec.describe "Api::V1::Bookings", type: :request do
       expect(body["booking_tools"].length).to eq(1)
       expect(body["booking_tools"][0]["quantity"]).to eq(2)
       expect(body["total_price"].to_s).to include("130")
+      expect(body["status"]).to eq("pending")
     end
 
     it "rejects overlapping bookings" do

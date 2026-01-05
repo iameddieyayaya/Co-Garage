@@ -4,6 +4,8 @@ class BookingPaymentService
   end
 
   def create_checkout_session(success_url:, cancel_url:)
+    raise Stripe::AuthenticationError.new("Stripe is not configured") if Stripe.api_key.blank?
+
     Stripe::Checkout::Session.create(
       payment_method_types: ['card'],
       line_items: [{

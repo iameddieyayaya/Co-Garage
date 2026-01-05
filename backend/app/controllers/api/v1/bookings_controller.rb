@@ -3,6 +3,27 @@ module Api
     class BookingsController < ApplicationController
       skip_before_action :authenticate_request, only: [:create]
 
+      def index
+        shop = current_user.shop
+        return render json: { error: "No shop found for this user" }, status: :unprocessable_content unless shop
+
+        bookings = Booking
+          .includes(:booking_tools, :tools, :bay)
+          .joins(:bay)
+          .where(bays: { shop_id: shop.id })
+          .order(created_at: :desc)
+
+        render json: bookings.as_json(
+          include: {
+            bay: { only: [:id, :description, :hourly_rate] },
+            booking_tools: {
+              include: { tool: { only: [:id, :name, :description, :day_rate] } },
+              only: [:quantity]
+            }
+          }
+        ), status: :ok
+      end
+
       def create
         bay = Bay.find_by(id: booking_params[:bay_id])
         return render json: { error: "Bay not found" }, status: :not_found unless bay
@@ -60,6 +81,40 @@ module Api
         render json: { error: e.message }, status: :unprocessable_content
       end
 
+      def accept
+        shop = current_user.shop
+        return render json: { error: "No shop found for this user" }, status: :unprocessable_content unless shop
+
+        booking = find_shop_booking(shop)
+        return render json: { error: "Booking not found" }, status: :not_found unless booking
+        return render json: { error: "Booking is not pending" }, status: :unprocessable_content unless booking.pending?
+
+        frontend_base_url = ENV.fetch("FRONTEND_BASE_URL", "http://localhost:5173")
+        service = BookingPaymentService.new(booking)
+        session = service.create_checkout_session(
+          success_url: "#{frontend_base_url}/book?success=1&booking_id=#{booking.id}",
+          cancel_url: "#{frontend_base_url}/book?canceled=1&booking_id=#{booking.id}"
+        )
+
+        booking.update!(stripe_payment_id: session.id, status: :accepted, accepted_at: Time.zone.now)
+
+        render json: { checkout_url: session.url, booking: booking }, status: :ok
+      rescue Stripe::AuthenticationError
+        render json: { error: "Stripe is not configured. Set STRIPE_SECRET_KEY (or credentials stripe.secret_key)." }, status: :internal_server_error
+      end
+
+      def decline
+        shop = current_user.shop
+        return render json: { error: "No shop found for this user" }, status: :unprocessable_content unless shop
+
+        booking = find_shop_booking(shop)
+        return render json: { error: "Booking not found" }, status: :not_found unless booking
+        return render json: { error: "Booking is not pending" }, status: :unprocessable_content unless booking.pending?
+
+        booking.update!(status: :declined, declined_at: Time.zone.now)
+        render json: booking, status: :ok
+      end
+
       private
 
       def booking_params
@@ -72,6 +127,10 @@ module Api
           :slot,
           tools: [:tool_id, :quantity]
         )
+      end
+
+      def find_shop_booking(shop)
+        Booking.joins(:bay).where(bays: { shop_id: shop.id }).find_by(id: params[:id])
       end
 
       def build_times(rental_date:, duration:, slot:)
@@ -116,4 +175,3 @@ module Api
     end
   end
 end
-
