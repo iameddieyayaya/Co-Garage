@@ -67,3 +67,35 @@ export interface PublicTool {
   available: boolean | null
   shop: PublicShopSummary
 }
+
+export interface BookingToolLine {
+  quantity: number
+  tool: {
+    id: number
+    name: string | null
+    description: string | null
+    day_rate: number | string | null
+  }
+}
+
+export interface Booking {
+  id: number
+  bay_id: number
+  user_id: number | null
+  guest_name: string | null
+  guest_email: string | null
+  start_time: string
+  end_time: string
+  total_price: number | string | null
+  stripe_payment_id: string | null
+  paid: boolean
+  status: 'pending' | 'accepted' | 'paid' | 'declined'
+  accepted_at: string | null
+  declined_at: string | null
+  bay?: {
+    id: number
+    description: string | null
+    hourly_rate: number | string | null
+  }
+  booking_tools?: BookingToolLine[]
+}

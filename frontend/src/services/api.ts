@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Bay, PublicBay, PublicShop, PublicTool, Shop, Tool, User } from '../types';
+import type { Bay, Booking, PublicBay, PublicShop, PublicTool, Shop, Tool, User } from '../types';
 
 const API_BASE_URL = '/api/v1';
 
@@ -146,6 +146,18 @@ export interface CreateGuestBookingData {
 export const bookingsAPI = {
   createGuest: async (data: CreateGuestBookingData) => {
     const response = await api.post('/bookings', { booking: data })
+    return response.data
+  },
+  listForOwner: async (): Promise<Booking[]> => {
+    const response = await api.get<Booking[]>('/bookings')
+    return response.data
+  },
+  accept: async (id: number): Promise<{ checkout_url: string; booking: Booking }> => {
+    const response = await api.patch<{ checkout_url: string; booking: Booking }>(`/bookings/${id}/accept`)
+    return response.data
+  },
+  decline: async (id: number): Promise<Booking> => {
+    const response = await api.patch<Booking>(`/bookings/${id}/decline`)
     return response.data
   },
 }
