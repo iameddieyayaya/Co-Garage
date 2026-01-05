@@ -1,13 +1,28 @@
 import Modal from "../components/Modal"
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { baysAPI } from "../services/api";
+import type { Bay } from "../types";
 
 
 const Dashboard: React.FC = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [bayDescription, setBayDescription] = useState("");
   const [hourlyRate, setHourlyRate] = useState(0);
+  const [bays, setBays] = useState<Bay[]>([]);
+
+  const refreshBays = async () => {
+    const data = await baysAPI.list()
+    setBays(data)
+  }
+
+  useEffect(() => {
+    refreshBays().catch(console.error)
+  }, []);
+
+  const activeBaysCount = useMemo(() => {
+    return bays.filter((b) => b.available === true).length
+  }, [bays])
 
   const handleSubmit = async () => {
     try {
@@ -20,6 +35,7 @@ const Dashboard: React.FC = () => {
       setBayDescription("");
       setHourlyRate(0);
       setModalOpen(false);
+      await refreshBays()
     } catch (err) {
       console.error(err);
       alert("Failed to add bay");
@@ -89,7 +105,7 @@ const Dashboard: React.FC = () => {
           </div>
           <div className="bg-gray-800 p-6 rounded-2xl shadow-lg">
             <h3 className="text-lg font-semibold text-gray-300 mb-2">Active Bays</h3>
-            <p className="text-3xl font-bold text-blue-500">0</p>
+            <p className="text-3xl font-bold text-blue-500">{activeBaysCount}</p>
           </div>
           <div className="bg-gray-800 p-6 rounded-2xl shadow-lg">
             <h3 className="text-lg font-semibold text-gray-300 mb-2">Revenue</h3>

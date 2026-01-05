@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Shop, User } from '../types';
+import type { Bay, Shop, User } from '../types';
 
 const API_BASE_URL = '/api/v1';
 
@@ -78,6 +78,10 @@ export interface CreateBayData {
 export const baysAPI = {
   create: async (data: CreateBayData) => {
     const response = await api.post('/bays', { bay: data })
+    return response.data
+  },
+  list: async (): Promise<Bay[]> => {
+    const response = await api.get<Bay[]>('/bays')
     return response.data
   },
 }

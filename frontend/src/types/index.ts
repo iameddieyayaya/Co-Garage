@@ -15,3 +15,11 @@ export interface Shop {
   description?: string | null
   active?: boolean | null
 }
+
+export interface Bay {
+  id: number
+  shop_id: number
+  hourly_rate: number | string | null
+  description: string | null
+  available: boolean | null
+}
