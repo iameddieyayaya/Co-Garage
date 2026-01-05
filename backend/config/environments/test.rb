@@ -8,8 +8,10 @@ Rails.application.configure do
   config.consider_all_requests_local = true
   config.action_controller.perform_caching = false
   config.cache_store = :null_store
-  config.action_dispatch.show_exceptions = false
+  config.action_dispatch.show_exceptions = :none
   config.active_support.deprecation = :stderr
   config.active_record.maintain_test_schema = true
-end
 
+  config.action_mailer.delivery_method = :test
+  config.action_mailer.perform_deliveries = true
+end

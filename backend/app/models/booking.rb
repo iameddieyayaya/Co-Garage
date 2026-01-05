@@ -12,8 +12,14 @@ class Booking < ApplicationRecord
     declined: 3
   }
 
+  enum payment_status: {
+    unpaid: 0,
+    invoice_sent: 1,
+    paid: 2
+  }, _prefix: :payment
+
   before_validation :set_defaults, on: :create
-  before_save :sync_paid_status
+  before_save :sync_paid_boolean
 
   validates :start_time, :end_time, :total_price, presence: true
   validates :guest_name, :guest_email, presence: true, unless: -> { user.present? }
@@ -24,12 +30,12 @@ class Booking < ApplicationRecord
 
   def set_defaults
     self.status ||= :pending
+    self.payment_status ||= :unpaid
     self.paid = false if paid.nil?
   end
 
-  def sync_paid_status
-    self.paid = true if status == "paid"
-    self.status = "paid" if paid? && status != "paid"
+  def sync_paid_boolean
+    self.paid = payment_status == "paid"
   end
 
   def end_after_start

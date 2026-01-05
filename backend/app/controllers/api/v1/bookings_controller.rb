@@ -98,7 +98,16 @@ module Api
 
         booking.update!(stripe_payment_id: session.id, status: :accepted, accepted_at: Time.zone.now)
 
-        render json: { checkout_url: session.url, booking: booking }, status: :ok
+        email_sent = false
+        begin
+          BookingMailer.payment_link(booking: booking, checkout_url: session.url).deliver_now
+          booking.update!(payment_status: :invoice_sent)
+          email_sent = true
+        rescue StandardError => e
+          Rails.logger.warn("Failed to send booking payment email for booking=#{booking.id}: #{e.class} #{e.message}")
+        end
+
+        render json: { checkout_url: session.url, booking: booking, email_sent: email_sent }, status: :ok
       rescue Stripe::AuthenticationError
         render json: { error: "Stripe is not configured. Set STRIPE_SECRET_KEY (or credentials stripe.secret_key)." }, status: :internal_server_error
       end

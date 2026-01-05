@@ -33,9 +33,8 @@ module Api
         booking = Booking.find_by(id: booking_id)
         return unless booking
 
-        booking.update!(paid: true, status: :paid, stripe_payment_id: session.id)
+        booking.update!(paid: true, status: :paid, payment_status: :paid, stripe_payment_id: session.id)
       end
     end
   end
 end
-

@@ -20,6 +20,7 @@ RSpec.describe "Api::V1::Stripe flow", type: :request do
     )
 
     Stripe.api_key = "sk_test_123"
+    ActionMailer::Base.deliveries.clear
     allow(Stripe::Checkout::Session).to receive(:create).and_return(OpenStruct.new(id: "cs_test_123", url: "https://checkout.test/session"))
 
     patch "/api/v1/bookings/#{booking.id}/accept", headers: headers
@@ -31,6 +32,11 @@ RSpec.describe "Api::V1::Stripe flow", type: :request do
     expect(booking.status).to eq("accepted")
     expect(booking.stripe_payment_id).to eq("cs_test_123")
     expect(booking.paid).to eq(false)
+    expect(booking.payment_status).to eq("invoice_sent")
+
+    email = ActionMailer::Base.deliveries.last
+    expect(email.to).to include("jane@example.com")
+    expect(email.body.encoded).to include("https://checkout.test/session")
   end
 
   it "returns 500 with a helpful error when Stripe is not configured" do
@@ -86,5 +92,6 @@ RSpec.describe "Api::V1::Stripe flow", type: :request do
     booking.reload
     expect(booking.status).to eq("paid")
     expect(booking.paid).to eq(true)
+    expect(booking.payment_status).to eq("paid")
   end
 end

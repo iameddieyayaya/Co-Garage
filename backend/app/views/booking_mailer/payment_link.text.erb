@@ -1,0 +1,15 @@
+Hi <%= @booking.guest_name.presence || "there" %>,
+
+Your booking request has been accepted. Please use the secure payment link below to complete payment:
+
+<%= @checkout_url %>
+
+Booking details:
+- Booking ID: <%= @booking.id %>
+- Bay: <%= @booking.bay&.description %>
+- Start: <%= @booking.start_time %>
+- End: <%= @booking.end_time %>
+- Total: $<%= @booking.total_price %>
+
+If you have questions, reply to this email.
+
