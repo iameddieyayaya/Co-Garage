@@ -7,6 +7,7 @@ Rails.application.routes.draw do
       post 'auth/register', to: 'auth#register'
       get 'auth/me', to: 'auth#me'
       resources :bays, only: [:create, :index, :show]
+      resources :tools, only: [:create, :index, :show]
       resources :users, only: [:create]
     end
   end

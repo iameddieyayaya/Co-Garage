@@ -39,15 +39,15 @@ puts "✅ Bays created for #{shop.name}"
 
 # --- Tools ---
 tools_data = [
-  { name: "Jack Stand", description: "Heavy-duty jack stand", hourly_rate: 5, available: true },
-  { name: "Impact Wrench", description: "Electric impact wrench", hourly_rate: 10, available: true },
-  { name: "Torque Wrench", description: "Precision torque wrench", hourly_rate: 7, available: true }
+  { name: "Jack Stand", description: "Heavy-duty jack stand", day_rate: 5, available: true },
+  { name: "Impact Wrench", description: "Electric impact wrench", day_rate: 10, available: true },
+  { name: "Torque Wrench", description: "Precision torque wrench", day_rate: 7, available: true }
 ]
 
 tools_data.each do |tool_attrs|
   shop.tools.find_or_create_by!(name: tool_attrs[:name]) do |tool|
     tool.description = tool_attrs[:description]
-    tool.hourly_rate = tool_attrs[:hourly_rate]
+    tool.day_rate = tool_attrs[:day_rate]
     tool.available = tool_attrs[:available]
   end
 end

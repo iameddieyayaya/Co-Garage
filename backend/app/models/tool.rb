@@ -5,5 +5,5 @@ class Tool < ApplicationRecord
 
 
   validates :name, presence: true
-  validates :hourly_rate, presence: true
+  validates :day_rate, presence: true
 end

@@ -23,3 +23,12 @@ export interface Bay {
   description: string | null
   available: boolean | null
 }
+
+export interface Tool {
+  id: number
+  shop_id: number
+  name: string | null
+  description: string | null
+  day_rate: number | string | null
+  available: boolean | null
+}

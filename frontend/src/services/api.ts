@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Bay, Shop, User } from '../types';
+import type { Bay, Shop, Tool, User } from '../types';
 
 const API_BASE_URL = '/api/v1';
 
@@ -82,6 +82,24 @@ export const baysAPI = {
   },
   list: async (): Promise<Bay[]> => {
     const response = await api.get<Bay[]>('/bays')
+    return response.data
+  },
+}
+
+export interface CreateToolData {
+  name: string
+  description?: string
+  day_rate: number
+  available?: boolean
+}
+
+export const toolsAPI = {
+  create: async (data: CreateToolData) => {
+    const response = await api.post('/tools', { tool: data })
+    return response.data
+  },
+  list: async (): Promise<Tool[]> => {
+    const response = await api.get<Tool[]>('/tools')
     return response.data
   },
 }
