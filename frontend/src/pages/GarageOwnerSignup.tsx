@@ -9,6 +9,7 @@ const GarageOwnerSignup: React.FC = () => {
     email: "",
     password: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -110,16 +111,26 @@ const GarageOwnerSignup: React.FC = () => {
               className="w-full rounded-md bg-zinc-900 border border-zinc-700 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
 
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Password"
-              required
-              minLength={6}
-              className="w-full rounded-md bg-zinc-900 border border-zinc-700 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Password"
+                required
+                minLength={6}
+                className="w-full rounded-md bg-zinc-900 border border-zinc-700 px-4 py-3 pr-16 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-orange-500 hover:text-orange-400"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
 
             <button
               type="submit"

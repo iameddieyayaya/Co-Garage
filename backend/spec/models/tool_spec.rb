@@ -2,7 +2,7 @@ require "rails_helper"
 
 RSpec.describe Tool, type: :model do
   subject { described_class.new(name: "Jack Stand", description: "Heavy-duty", hourly_rate: 5, available: true, shop: shop) }
-  let(:shop) { Shop.create!(name: "Alice’s Garage", location: "San Diego", description: "DIY Garage", user: User.create!(name: "Alice", email: "alice@example.com", password: "password", role: :owner)) }
+  let(:shop) { Shop.create!(name: "Alice’s Garage", location: "San Diego", description: "DIY Garage", owner: User.create!(name: "Alice", email: "alice@example.com", password: "password", role: :shop_owner)) }
 
   it "is valid with valid attributes" do
     expect(subject).to be_valid

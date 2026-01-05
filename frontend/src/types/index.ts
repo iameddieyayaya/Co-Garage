@@ -7,3 +7,11 @@ export interface User {
   name?: string
 }
 
+export interface Shop {
+  id: number
+  owner_id: number
+  name: string
+  location: string
+  description?: string | null
+  active?: boolean | null
+}

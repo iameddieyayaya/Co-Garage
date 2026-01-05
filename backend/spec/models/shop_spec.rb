@@ -1,11 +1,11 @@
 require "rails_helper"
 
 RSpec.describe Shop, type: :model do
-  let(:owner) { User.create!(name: "Alice Garage", email: "alice@example.com", password: "password123", password_confirmation: "password123", role: :owner) }
+  let(:owner) { User.create!(name: "Alice Garage", email: "alice@example.com", password: "password123", password_confirmation: "password123", role: :shop_owner) }
 
   subject do
     described_class.new(
-      user: owner,
+      owner: owner,
       name: "Alice’s Garage",
       location: "San Diego, CA",
       description: "DIY auto garage with rentable bays and tools."
@@ -27,14 +27,14 @@ RSpec.describe Shop, type: :model do
     expect(subject).not_to be_valid
   end
 
-  it "is not valid without a user" do
-    subject.user = nil
+  it "is not valid without an owner" do
+    subject.owner = nil
     expect(subject).not_to be_valid
   end
 
   # Associations
-  it "belongs to a user" do
-    expect(subject.user).to eq(owner)
+  it "belongs to an owner" do
+    expect(subject.owner).to eq(owner)
   end
 
   it "can have many bays" do

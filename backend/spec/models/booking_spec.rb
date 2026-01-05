@@ -1,8 +1,8 @@
 require 'rails_helper'
 
 RSpec.describe Booking, type: :model do
-  let(:user) { User.create!(name: "Alice Garage", email: "alice@example.com", password: "password123", password_confirmation: "password123", role: :owner) }
-  let(:shop) { Shop.create!(user: user, name: "Alice’s Garage", location: "San Diego, CA", description: "DIY auto garage with rentable bays and tools.", active: true) }
+  let(:user) { User.create!(name: "Alice Garage", email: "alice@example.com", password: "password123", password_confirmation: "password123", role: :shop_owner) }
+  let(:shop) { Shop.create!(owner: user, name: "Alice’s Garage", location: "San Diego, CA", description: "DIY auto garage with rentable bays and tools.", active: true) }
   let(:bay) { Bay.create!(shop: shop, description: "Lift bay", hourly_rate: 30, available: true) }
 
   subject do

@@ -5,6 +5,8 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import GarageOwnerSignup from "./pages/GarageOwnerSignup";
 import Dashboard from "./pages/Dashboard";
+import ShopOnboarding from "./pages/ShopOnboarding";
+import RequireAuth from "./components/RequireAuth";
 
 export default function App() {
   return (
@@ -16,7 +18,22 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/owners/signup" element={<GarageOwnerSignup />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route
+              path="/onboarding/shop"
+              element={
+                <RequireAuth>
+                  <ShopOnboarding />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <RequireAuth>
+                  <Dashboard />
+                </RequireAuth>
+              }
+            />
           </Routes>
         </main>
       </BrowserRouter>

@@ -2,6 +2,8 @@ class User < ApplicationRecord
   has_secure_password
   has_one :shop, foreign_key: :owner_id, dependent: :destroy
 
+  before_validation :normalize_email
+
 
   enum role: {
     shop_owner: 0
@@ -10,4 +12,10 @@ class User < ApplicationRecord
   validates :email, presence: true, uniqueness: { case_sensitive: false }
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :password, length: { minimum: 6 }, if: -> { new_record? || !password.nil? }
+
+  private
+
+  def normalize_email
+    self.email = email.to_s.strip.downcase.presence
+  end
 end

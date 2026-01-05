@@ -2,7 +2,8 @@ class Api::V1::AuthController < ApplicationController
   skip_before_action :authenticate_request, only: [:login, :register]
 
   def login
-    user = User.find_by(email: params[:email])
+    email = params[:email].to_s.strip.downcase
+    user = User.find_by('LOWER(email) = ?', email)
     
     if user && user.authenticate(params[:password])
       token = JwtService.encode({ user_id: user.id })

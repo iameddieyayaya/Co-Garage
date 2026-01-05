@@ -1,6 +1,7 @@
 import Modal from "../components/Modal"
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { baysAPI } from "../services/api";
 
 
 const Dashboard: React.FC = () => {
@@ -9,30 +10,17 @@ const Dashboard: React.FC = () => {
   const [hourlyRate, setHourlyRate] = useState(0);
 
   const handleSubmit = async () => {
-    const token = localStorage.getItem("token"); 
-    console.log({token})
-    const res = await fetch("/api/v1/bays", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        bay: {
-          description: bayDescription,
-          hourly_rate: hourlyRate,
-          available: true,
-        },
-      }),
-    });
-  
-    if (res.ok) {
+    try {
+      await baysAPI.create({
+        description: bayDescription,
+        hourly_rate: hourlyRate,
+        available: true,
+      })
       alert("Bay added successfully!");
       setBayDescription("");
       setHourlyRate(0);
       setModalOpen(false);
-    } else {
-      const err = await res.json();
+    } catch (err) {
       console.error(err);
       alert("Failed to add bay");
     }
@@ -135,4 +123,3 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-

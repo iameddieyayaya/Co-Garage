@@ -19,7 +19,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const token = localStorage.getItem('token')
-    console.log({token})
     const storedUser = localStorage.getItem('user')
     
     if (token && storedUser) {
@@ -82,4 +81,3 @@ export const useAuth = () => {
   }
   return context
 }
-

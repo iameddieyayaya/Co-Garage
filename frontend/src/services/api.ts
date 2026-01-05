@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { User } from '../types';
+import type { Shop, User } from '../types';
 
 const API_BASE_URL = '/api/v1';
 
@@ -52,5 +52,34 @@ export const authAPI = {
   },
 };
 
-export default api;
+export interface CreateShopData {
+  name: string;
+  location: string;
+  description?: string;
+}
 
+export const shopsAPI = {
+  current: async (): Promise<Shop> => {
+    const response = await api.get('/shops/current');
+    return response.data;
+  },
+  create: async (data: CreateShopData): Promise<Shop> => {
+    const response = await api.post('/shops', { shop: data });
+    return response.data;
+  },
+};
+
+export interface CreateBayData {
+  description: string
+  hourly_rate: number
+  available?: boolean
+}
+
+export const baysAPI = {
+  create: async (data: CreateBayData) => {
+    const response = await api.post('/bays', { bay: data })
+    return response.data
+  },
+}
+
+export default api;
