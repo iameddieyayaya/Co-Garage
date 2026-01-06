@@ -18,12 +18,12 @@ const Home: React.FC = () => {
               <p className="text-xl md:text-2xl text-gray-300 mb-8 drop-shadow">
               Book garage bays and pro-grade tools on demand.
               </p>
-              <Link
-                to="/owners/signup"
-                className="inline-block bg-blue-500 text-gray-900 px-8 py-3 rounded-full font-bold text-lg hover:bg-blue-600 transition"
-              >
-                Get Started
-              </Link>
+	              <Link
+	                to="/owners/signup"
+	                className="inline-block bg-blue-600 text-white px-8 py-3 rounded-full font-bold text-lg hover:bg-blue-500 transition shadow-sm"
+	              >
+	                Get Started
+	              </Link>
             </div>
           </section>
     
@@ -100,12 +100,12 @@ const Home: React.FC = () => {
           {/* CTA */}
           <section id="signup" className="py-20 text-center">
             <h3 className="text-4xl font-bold mb-6 text-blue-500">Ready to Garage?</h3>
-            <Link
-              to="/owners/signup"
-              className="bg-blue-500 text-gray-900 px-8 py-3 rounded-full font-bold text-lg hover:bg-blue-600 transition"
-            >
-              Sign Up Now
-            </Link>
+	            <Link
+	              to="/owners/signup"
+	              className="bg-blue-600 text-white px-8 py-3 rounded-full font-bold text-lg hover:bg-blue-500 transition shadow-sm"
+	            >
+	              Sign Up Now
+	            </Link>
           </section>
         </div>
       );

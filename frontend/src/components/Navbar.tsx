@@ -25,7 +25,7 @@ const Navbar = () => {
               </Link>
               <button
                 onClick={handleLogout}
-                className="bg-blue-500 text-gray-900 px-5 py-2 rounded-full font-bold hover:bg-blue-600 transition"
+                className="bg-blue-600 text-white px-5 py-2 rounded-full font-bold hover:bg-blue-500 transition shadow-sm"
               >
                 Sign Out
               </button>
@@ -34,7 +34,7 @@ const Navbar = () => {
             <>
               <a href="#features" className="hover:text-blue-500 font-semibold transition text-gray-100">Features</a>
               <a href="#how-it-works" className="hover:text-blue-500 font-semibold transition text-gray-100">How It Works</a>
-              <Link to="/owners/signup" className="bg-blue-500 text-gray-900 px-5 py-2 rounded-full font-bold hover:bg-blue-600 transition">
+              <Link to="/owners/signup" className="bg-blue-600 text-white px-5 py-2 rounded-full font-bold hover:bg-blue-500 transition shadow-sm">
                 Sign Up
               </Link>
             </>

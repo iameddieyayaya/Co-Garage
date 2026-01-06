@@ -223,14 +223,14 @@ export default function Booking() {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    disabled={!canBook}
-                    onClick={() => openForShop(shop)}
-                    className="mt-6 w-full bg-blue-500 hover:bg-blue-600 disabled:bg-zinc-800 disabled:text-gray-400 disabled:cursor-not-allowed text-black py-3 rounded-xl font-bold transition"
-                  >
-                    {canBook ? 'Request booking' : 'No bays available'}
-                  </button>
+	                  <button
+	                    type="button"
+	                    disabled={!canBook}
+	                    onClick={() => openForShop(shop)}
+	                    className="mt-6 w-full bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-gray-400 disabled:cursor-not-allowed text-white py-3 rounded-xl font-bold transition shadow-sm"
+	                  >
+	                    {canBook ? 'Request booking' : 'No bays available'}
+	                  </button>
                 </div>
               )
             })}
@@ -247,7 +247,7 @@ export default function Booking() {
         actionDisabled={submitting || loadingDetails}
         panelClassName="sm:max-w-3xl"
       >
-        <div className="text-sm text-gray-700 dark:text-gray-200">
+        <div className="text-sm text-gray-100">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <div>
               {modalError && (
@@ -255,13 +255,22 @@ export default function Booking() {
               )}
               {successId && (
                 <div className="mb-4 p-3 bg-emerald-900/20 border border-emerald-800 rounded-xl text-emerald-200">
-                  Request submitted{successId ? ` (ID #${successId})` : ''}. We’ll contact you to confirm.
+                  Request submitted
+                  {successId ? (
+                    <>
+                      {' '}
+                      <span className="text-white font-semibold">(ID #{successId})</span>
+                    </>
+                  ) : (
+                    ''
+                  )}
+                  . We’ll contact you to confirm.
                 </div>
               )}
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold mb-1">Bay</label>
+                  <label className="block text-sm font-semibold mb-1 text-white">Bay</label>
                   <select
                     value={selectedBayId ?? ''}
                     onChange={(e) => setSelectedBayId(e.target.value ? Number(e.target.value) : null)}
@@ -279,7 +288,7 @@ export default function Booking() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold mb-1">Date</label>
+                    <label className="block text-sm font-semibold mb-1 text-white">Date</label>
                     <input
                       type="date"
                       value={selectedDate}
@@ -288,7 +297,7 @@ export default function Booking() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold mb-1">Duration</label>
+                    <label className="block text-sm font-semibold mb-1 text-white">Duration</label>
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         type="button"
@@ -319,7 +328,7 @@ export default function Booking() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-1">Time</label>
+                  <label className="block text-sm font-semibold mb-1 text-white">Time</label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
@@ -357,7 +366,7 @@ export default function Booking() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold mb-1">Your name</label>
+                    <label className="block text-sm font-semibold mb-1 text-white">Your name</label>
                     <input
                       type="text"
                       value={guestName}
@@ -367,7 +376,7 @@ export default function Booking() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold mb-1">Email</label>
+                    <label className="block text-sm font-semibold mb-1 text-white">Email</label>
                     <input
                       type="email"
                       value={guestEmail}
@@ -380,7 +389,7 @@ export default function Booking() {
 
                 <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
                   <div className="flex items-center justify-between">
-                    <div className="font-semibold">Estimated total</div>
+                    <div className="font-semibold text-gray-900 dark:text-white">Estimated total</div>
                     <div className="text-lg font-bold text-blue-600 dark:text-blue-400">${totalCost.toFixed(2)}</div>
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
@@ -392,8 +401,8 @@ export default function Booking() {
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-bold">Tools</h3>
-                <p className="text-xs text-gray-500">{duration === 'full' ? 'Full day pricing' : 'Half day pricing'}</p>
+                <h3 className="text-sm font-bold text-white">Tools</h3>
+                <p className="text-xs text-gray-300">{duration === 'full' ? 'Full day pricing' : 'Half day pricing'}</p>
               </div>
 
               {loadingDetails && (
@@ -424,9 +433,9 @@ export default function Booking() {
                               className="mt-1 h-4 w-4 accent-blue-500"
                             />
                             <div>
-                              <div className="font-semibold">{tool.name}</div>
-                              {tool.description && <div className="text-xs text-gray-500 mt-1">{tool.description}</div>}
-                              <div className="text-xs text-gray-500 mt-2">
+                              <div className="font-semibold text-gray-900 dark:text-white">{tool.name}</div>
+                              {tool.description && <div className="text-xs text-gray-300 mt-1">{tool.description}</div>}
+                              <div className="text-xs text-gray-300 mt-2">
                                 ${toNumber(tool.day_rate).toFixed(2)}/day • billed {duration === 'full' ? 'full' : 'half'} day
                               </div>
                             </div>
