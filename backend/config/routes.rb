@@ -12,10 +12,17 @@ Rails.application.routes.draw do
         member do
           patch :accept
           patch :decline
+          patch :resend_invoice
+          patch :cancel
         end
       end
 
       post "stripe/webhook", to: "stripe_webhooks#create"
+      namespace :stripe_connect do
+        post :create_account
+        post :onboarding_link
+        get :status
+      end
 
       namespace :public do
         resources :shops, only: [:index]

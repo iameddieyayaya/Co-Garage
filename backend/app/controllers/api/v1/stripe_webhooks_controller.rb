@@ -17,6 +17,8 @@ module Api
         case event.type
         when "checkout.session.completed"
           handle_checkout_session_completed(event.data.object)
+        when "account.updated"
+          StripeConnectService.sync_account!(event.data.object)
         end
 
         head :ok
@@ -33,7 +35,13 @@ module Api
         booking = Booking.find_by(id: booking_id)
         return unless booking
 
-        booking.update!(paid: true, status: :paid, payment_status: :paid, stripe_payment_id: session.id)
+        booking.update!(
+          paid: true,
+          status: :paid,
+          payment_status: :paid,
+          stripe_payment_id: session.id,
+          stripe_payment_intent_id: session.payment_intent
+        )
       end
     end
   end

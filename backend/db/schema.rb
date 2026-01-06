@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_01_05_198000) do
+ActiveRecord::Schema[7.1].define(version: 2026_01_05_203000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -50,6 +50,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_01_05_198000) do
     t.datetime "accepted_at"
     t.datetime "declined_at"
     t.integer "payment_status", default: 0, null: false
+    t.string "stripe_payment_intent_id"
+    t.string "stripe_refund_id"
+    t.datetime "refunded_at"
+    t.datetime "canceled_at"
     t.index ["bay_id"], name: "index_bookings_on_bay_id"
     t.index ["user_id"], name: "index_bookings_on_user_id"
   end
@@ -62,7 +66,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_01_05_198000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "active"
+    t.string "stripe_account_id"
+    t.boolean "stripe_charges_enabled", default: false, null: false
+    t.boolean "stripe_payouts_enabled", default: false, null: false
+    t.boolean "stripe_details_submitted", default: false, null: false
     t.index ["owner_id"], name: "index_shops_on_owner_id"
+    t.index ["stripe_account_id"], name: "index_shops_on_stripe_account_id"
   end
 
   create_table "tools", force: :cascade do |t|

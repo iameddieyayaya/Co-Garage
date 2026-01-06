@@ -1,7 +1,7 @@
 import Modal from "../components/Modal"
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { baysAPI, bookingsAPI, toolsAPI } from "../services/api";
+import { baysAPI, bookingsAPI, stripeConnectAPI, toolsAPI } from "../services/api";
 import type { Bay, Booking, Tool } from "../types";
 
 
@@ -21,6 +21,7 @@ const Dashboard: React.FC = () => {
   const [isCheckoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState("");
   const [checkoutBookingId, setCheckoutBookingId] = useState<number | null>(null);
+  const [stripeStatus, setStripeStatus] = useState<null | Awaited<ReturnType<typeof stripeConnectAPI.status>>>(null)
 
   const refreshBays = async () => {
     const data = await baysAPI.list()
@@ -41,6 +42,7 @@ const Dashboard: React.FC = () => {
     refreshBays().catch(console.error)
     refreshTools().catch(console.error)
     refreshBookings().catch(console.error)
+    stripeConnectAPI.status().then(setStripeStatus).catch(() => setStripeStatus(null))
   }, []);
 
   const activeBaysCount = useMemo(() => {
@@ -125,7 +127,45 @@ const Dashboard: React.FC = () => {
       await refreshBookings()
     } catch (err) {
       console.error(err)
-      alert("Failed to accept booking")
+      const message = (err as any)?.response?.data?.error || "Failed to accept booking"
+      alert(message)
+    }
+  }
+
+  const handleConnectStripe = async () => {
+    try {
+      await stripeConnectAPI.createAccount()
+      const { url } = await stripeConnectAPI.onboardingLink()
+      window.open(url, "_blank", "noopener,noreferrer")
+      const status = await stripeConnectAPI.status()
+      setStripeStatus(status)
+    } catch (err) {
+      console.error(err)
+      const message = (err as any)?.response?.data?.error || "Failed to start Stripe onboarding"
+      alert(message)
+    }
+  }
+
+  const handleResendInvoice = async (bookingId: number) => {
+    try {
+      const res = await bookingsAPI.resendInvoice(bookingId)
+      alert(res.email_sent ? "Invoice email sent!" : "Unable to send invoice email.")
+      await refreshBookings()
+    } catch (err) {
+      console.error(err)
+      alert("Failed to resend invoice")
+    }
+  }
+
+  const handleCancelBooking = async (bookingId: number) => {
+    const ok = confirm("Cancel this booking? If it was paid, it will be refunded.")
+    if (!ok) return
+    try {
+      await bookingsAPI.cancel(bookingId)
+      await refreshBookings()
+    } catch (err) {
+      console.error(err)
+      alert("Failed to cancel booking")
     }
   }
 
@@ -314,22 +354,42 @@ const Dashboard: React.FC = () => {
                       ) : null}
                     </div>
 
-                    {b.status === "pending" ? (
-                      <div className="flex gap-2">
-	                      <button
-	                        className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-md font-semibold transition shadow-sm"
-	                        onClick={() => handleAcceptBooking(b.id)}
-	                      >
-	                        Accept
-	                      </button>
+                    <div className="flex flex-wrap gap-2">
+                      {b.status === "pending" ? (
+                        <button
+                          className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-md font-semibold transition shadow-sm"
+                          onClick={() => handleAcceptBooking(b.id)}
+                        >
+                          Accept
+                        </button>
+                      ) : null}
+                      {b.status === "pending" ? (
                         <button
                           className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md font-semibold transition"
                           onClick={() => handleDeclineBooking(b.id)}
                         >
                           Decline
                         </button>
-                      </div>
-                    ) : null}
+                      ) : null}
+
+                      {b.status === "accepted" && b.payment_status !== "paid" && b.payment_status !== "refunded" ? (
+                        <button
+                          className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md font-semibold transition"
+                          onClick={() => handleResendInvoice(b.id)}
+                        >
+                          Resend invoice
+                        </button>
+                      ) : null}
+
+                      {b.status !== "declined" && b.status !== "canceled" ? (
+                        <button
+                          className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md font-semibold transition"
+                          onClick={() => handleCancelBooking(b.id)}
+                        >
+                          Cancel{b.payment_status === "paid" ? " (refund)" : ""}
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -384,6 +444,46 @@ const Dashboard: React.FC = () => {
             <h3 className="text-lg font-semibold text-gray-300 mb-2">Active Tools</h3>
             <p className="text-3xl font-bold text-blue-500">{activeToolsCount}</p>
           </div>
+        </div>
+
+        <div className="bg-gray-800 p-6 rounded-2xl shadow-lg mb-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+              <h3 className="text-2xl font-bold text-blue-500">Payouts</h3>
+              <p className="text-gray-400 text-sm mt-1">
+                Platform fee: {stripeStatus?.platform_fee_percent ?? "10"}% • Earnings are paid out to your connected Stripe account.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              {stripeStatus?.ready_for_payouts ? (
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-200">
+                    Payouts enabled
+                  </span>
+                  <button
+                    type="button"
+                    className="bg-gray-700 hover:bg-gray-600 text-white px-5 py-2 rounded-md font-semibold transition"
+                    onClick={handleConnectStripe}
+                  >
+                    Manage Stripe
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-md font-semibold transition shadow-sm"
+                  onClick={handleConnectStripe}
+                >
+                  Connect Stripe
+                </button>
+              )}
+            </div>
+          </div>
+          {!stripeStatus?.ready_for_payouts && (
+            <p className="text-xs text-gray-500 mt-3">
+              Complete Stripe onboarding to enable payments and automatic deposits to your bank account.
+            </p>
+          )}
         </div>
 
         <div className="bg-gray-800 p-6 rounded-2xl shadow-lg mb-8">

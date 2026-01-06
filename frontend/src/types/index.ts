@@ -88,10 +88,15 @@ export interface Booking {
   end_time: string
   total_price: number | string | null
   stripe_payment_id: string | null
+  stripe_payment_intent_id?: string | null
+  stripe_refund_id?: string | null
   paid: boolean
-  status: 'pending' | 'accepted' | 'paid' | 'declined'
+  status: 'pending' | 'accepted' | 'paid' | 'declined' | 'canceled'
+  payment_status: 'unpaid' | 'invoice_sent' | 'paid' | 'refunded'
   accepted_at: string | null
   declined_at: string | null
+  canceled_at?: string | null
+  refunded_at?: string | null
   bay?: {
     id: number
     description: string | null

@@ -9,13 +9,15 @@ class Booking < ApplicationRecord
     pending: 0,
     accepted: 1,
     paid: 2,
-    declined: 3
+    declined: 3,
+    canceled: 4
   }
 
   enum payment_status: {
     unpaid: 0,
     invoice_sent: 1,
-    paid: 2
+    paid: 2,
+    refunded: 3
   }, _prefix: :payment
 
   before_validation :set_defaults, on: :create

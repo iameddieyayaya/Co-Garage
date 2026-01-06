@@ -160,6 +160,38 @@ export const bookingsAPI = {
     const response = await api.patch<Booking>(`/bookings/${id}/decline`)
     return response.data
   },
+  resendInvoice: async (id: number): Promise<{ email_sent: boolean }> => {
+    const response = await api.patch<{ email_sent: boolean }>(`/bookings/${id}/resend_invoice`)
+    return response.data
+  },
+  cancel: async (id: number): Promise<Booking> => {
+    const response = await api.patch<Booking>(`/bookings/${id}/cancel`)
+    return response.data
+  },
+}
+
+export interface StripeConnectStatus {
+  stripe_account_id: string | null
+  charges_enabled: boolean
+  payouts_enabled: boolean
+  details_submitted: boolean
+  ready_for_payouts: boolean
+  platform_fee_percent: string
+}
+
+export const stripeConnectAPI = {
+  status: async (): Promise<StripeConnectStatus> => {
+    const response = await api.get<StripeConnectStatus>('/stripe_connect/status')
+    return response.data
+  },
+  createAccount: async (): Promise<{ stripe_account_id: string }> => {
+    const response = await api.post<{ stripe_account_id: string }>('/stripe_connect/create_account')
+    return response.data
+  },
+  onboardingLink: async (): Promise<{ url: string }> => {
+    const response = await api.post<{ url: string }>('/stripe_connect/onboarding_link')
+    return response.data
+  },
 }
 
 export default api;

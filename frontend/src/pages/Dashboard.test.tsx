@@ -37,6 +37,20 @@ jest.mock('../services/api', () => {
       ]),
       accept: jest.fn(async () => ({ checkout_url: 'https://checkout.test/session', booking: {} })),
       decline: jest.fn(async () => ({})),
+      resendInvoice: jest.fn(async () => ({ email_sent: true })),
+      cancel: jest.fn(async () => ({})),
+    },
+    stripeConnectAPI: {
+      status: jest.fn(async () => ({
+        stripe_account_id: null,
+        charges_enabled: false,
+        payouts_enabled: false,
+        details_submitted: false,
+        ready_for_payouts: false,
+        platform_fee_percent: '10',
+      })),
+      createAccount: jest.fn(async () => ({ stripe_account_id: 'acct_123' })),
+      onboardingLink: jest.fn(async () => ({ url: 'https://connect.test/onboarding' })),
     },
   }
 })

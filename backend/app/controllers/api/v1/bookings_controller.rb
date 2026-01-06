@@ -110,6 +110,58 @@ module Api
         render json: { checkout_url: session.url, booking: booking, email_sent: email_sent }, status: :ok
       rescue Stripe::AuthenticationError
         render json: { error: "Stripe is not configured. Set STRIPE_SECRET_KEY (or credentials stripe.secret_key)." }, status: :internal_server_error
+      rescue Stripe::InvalidRequestError => e
+        render json: { error: e.message }, status: :unprocessable_content
+      end
+
+      def resend_invoice
+        shop = current_user.shop
+        return render json: { error: "No shop found for this user" }, status: :unprocessable_content unless shop
+
+        booking = find_shop_booking(shop)
+        return render json: { error: "Booking not found" }, status: :not_found unless booking
+        return render json: { error: "Booking must be accepted and unpaid" }, status: :unprocessable_content unless booking.accepted? && !booking.payment_paid?
+
+        checkout_url = BookingPaymentService.new(booking).checkout_url_from_session_id
+        return render json: { error: "No invoice session found" }, status: :unprocessable_content if checkout_url.blank?
+
+        BookingMailer.payment_link(booking: booking, checkout_url: checkout_url).deliver_now
+        booking.update!(payment_status: :invoice_sent)
+
+        render json: { email_sent: true }, status: :ok
+      rescue Stripe::AuthenticationError
+        render json: { error: "Stripe is not configured. Set STRIPE_SECRET_KEY (or credentials stripe.secret_key)." }, status: :internal_server_error
+      end
+
+      def cancel
+        shop = current_user.shop
+        return render json: { error: "No shop found for this user" }, status: :unprocessable_content unless shop
+
+        booking = find_shop_booking(shop)
+        return render json: { error: "Booking not found" }, status: :not_found unless booking
+
+        if booking.canceled?
+          return render json: booking, status: :ok
+        end
+
+        if booking.payment_paid?
+          refund = BookingPaymentService.new(booking).refund_full!
+          booking.update!(
+            payment_status: :refunded,
+            status: :canceled,
+            canceled_at: Time.zone.now,
+            refunded_at: Time.zone.now,
+            stripe_refund_id: refund.id
+          )
+        else
+          booking.update!(status: :canceled, canceled_at: Time.zone.now)
+        end
+
+        render json: booking, status: :ok
+      rescue Stripe::AuthenticationError
+        render json: { error: "Stripe is not configured. Set STRIPE_SECRET_KEY (or credentials stripe.secret_key)." }, status: :internal_server_error
+      rescue Stripe::StripeError => e
+        render json: { error: e.message }, status: :unprocessable_content
       end
 
       def decline
