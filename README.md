@@ -94,13 +94,32 @@ The frontend will be available at `http://localhost:5173`
 
 🚧 **In Development** - This project is currently being built incrementally.
 
-## Features (Planned)
+## Current Features
 
 - User authentication (shop owner / renter roles)
 - Automotive shop CRUD operations
 - Bay listing with availability
 - Booking system
 - Pricing per hour
+
+## Future Features
+
+- Bay and tool image galleries
+- Advanced calendar with blocked-out dates
+- Stripe Connect payout history for shop owners
+- Automated reminders (email/SMS) for upcoming bookings
+- Reviews and ratings for shops and bays
+- Search, filters, and saved searches
+
+## App Demo Photos
+
+| Home Page | Call to Action | Dashboard |
+| --- | --- | --- |
+| ![Home Page](AppPhotos/HomePage.png) | ![Call to Action](AppPhotos/CTA.png) | ![Dashboard](AppPhotos/Dashboard.png) |
+
+| Request Booking | Paid Booking |
+| --- | --- |
+| ![Request Booking](AppPhotos/RequestBooking.png) | ![Paid Booking](AppPhotos/PaidBooking.png) |
 
 ## License
 

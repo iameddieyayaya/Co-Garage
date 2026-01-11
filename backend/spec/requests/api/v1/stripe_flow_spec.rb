@@ -5,6 +5,28 @@ RSpec.describe "Api::V1::Stripe flow", type: :request do
   let(:token) { JwtService.encode({ user_id: owner.id }) }
   let(:headers) { { "Authorization" => "Bearer #{token}" } }
 
+  def with_env(overrides)
+    original = {}
+    overrides.each do |key, value|
+      original[key] = ENV.key?(key) ? ENV[key] : :__missing__
+      if value.nil?
+        ENV.delete(key)
+      else
+        ENV[key] = value
+      end
+    end
+
+    yield
+  ensure
+    original.each do |key, value|
+      if value == :__missing__
+        ENV.delete(key)
+      else
+        ENV[key] = value
+      end
+    end
+  end
+
   it "allows shop owner to accept a pending booking and generate a Checkout link" do
     shop = Shop.create!(owner: owner, name: "Main Garage", location: "Austin, TX")
     shop.update!(stripe_account_id: "acct_123", stripe_charges_enabled: true, stripe_payouts_enabled: true)
@@ -22,7 +44,20 @@ RSpec.describe "Api::V1::Stripe flow", type: :request do
 
     Stripe.api_key = "sk_test_123"
     ActionMailer::Base.deliveries.clear
-    allow(Stripe::Checkout::Session).to receive(:create).and_return(OpenStruct.new(id: "cs_test_123", url: "https://checkout.test/session"))
+    allow(ENV).to receive(:fetch).and_call_original
+    allow(ENV).to receive(:fetch).with("PLATFORM_FEE_PERCENT", "10").and_return("10")
+    expect(Stripe::Checkout::Session).to receive(:create).with(
+      hash_including(
+        payment_intent_data: a_hash_including(
+          transfer_data: a_hash_including(destination: "acct_123"),
+          application_fee_amount: 1200
+        ),
+        metadata: a_hash_including(
+          booking_id: booking.id,
+          shop_id: shop.id
+        )
+      )
+    ).and_return(OpenStruct.new(id: "cs_test_123", url: "https://checkout.test/session"))
 
     patch "/api/v1/bookings/#{booking.id}/accept", headers: headers
 
@@ -38,6 +73,31 @@ RSpec.describe "Api::V1::Stripe flow", type: :request do
     email = ActionMailer::Base.deliveries.last
     expect(email.to).to include("jane@example.com")
     expect(email.body.encoded).to include("https://checkout.test/session")
+  end
+
+  it "returns 422 when shop is not ready for payouts" do
+    shop = Shop.create!(owner: owner, name: "Main Garage", location: "Austin, TX")
+    shop.update!(stripe_account_id: "acct_123", stripe_charges_enabled: true, stripe_payouts_enabled: false)
+    bay = shop.bays.create!(description: "Lift bay", hourly_rate: 30, available: true)
+    booking = Booking.create!(
+      bay: bay,
+      user: nil,
+      guest_name: "Jane Doe",
+      guest_email: "jane@example.com",
+      start_time: Time.zone.local(2026, 1, 5, 9, 0, 0),
+      end_time: Time.zone.local(2026, 1, 5, 13, 0, 0),
+      total_price: 120,
+      status: :pending
+    )
+
+    Stripe.api_key = "sk_test_123"
+
+    patch "/api/v1/bookings/#{booking.id}/accept", headers: headers
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.parsed_body["error"]).to include("Shop is not ready for payouts")
+    booking.reload
+    expect(booking.status).to eq("pending")
   end
 
   it "returns 500 with a helpful error when Stripe is not configured" do
@@ -151,5 +211,46 @@ RSpec.describe "Api::V1::Stripe flow", type: :request do
     expect(booking.paid).to eq(true)
     expect(booking.payment_status).to eq("paid")
     expect(booking.stripe_payment_intent_id).to eq("pi_test_123")
+  end
+
+  it "returns 400 for invalid webhook signatures when STRIPE_WEBHOOK_SECRET is set" do
+    with_env("STRIPE_WEBHOOK_SECRET" => "whsec_test") do
+      allow(Stripe::Webhook).to receive(:construct_event).and_raise(
+        Stripe::SignatureVerificationError.new("invalid", "sig")
+      )
+
+      post "/api/v1/stripe/webhook",
+        params: { type: "checkout.session.completed" }.to_json,
+        headers: { "CONTENT_TYPE" => "application/json", "Stripe-Signature" => "bad" }
+
+      expect(response).to have_http_status(:bad_request)
+    end
+  end
+
+  it "updates shop Stripe fields via account.updated webhook" do
+    shop = Shop.create!(owner: owner, name: "Main Garage", location: "Austin, TX")
+    allow(Stripe::Event).to receive(:construct_from).and_return(
+      OpenStruct.new(
+        type: "account.updated",
+        data: OpenStruct.new(
+          object: OpenStruct.new(
+            id: "acct_123",
+            charges_enabled: true,
+            payouts_enabled: true,
+            details_submitted: true,
+            metadata: OpenStruct.new(shop_id: shop.id)
+          )
+        )
+      )
+    )
+
+    post "/api/v1/stripe/webhook", params: { any: "json" }.to_json, headers: { "CONTENT_TYPE" => "application/json" }
+
+    expect(response).to have_http_status(:ok)
+    shop.reload
+    expect(shop.stripe_account_id).to eq("acct_123")
+    expect(shop.stripe_charges_enabled).to eq(true)
+    expect(shop.stripe_payouts_enabled).to eq(true)
+    expect(shop.stripe_details_submitted).to eq(true)
   end
 end
