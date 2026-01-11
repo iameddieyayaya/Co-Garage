@@ -51,6 +51,7 @@ jest.mock('../services/api', () => {
       })),
       createAccount: jest.fn(async () => ({ stripe_account_id: 'acct_123' })),
       onboardingLink: jest.fn(async () => ({ url: 'https://connect.test/onboarding' })),
+      loginLink: jest.fn(async () => ({ url: 'https://connect.test/login' })),
     },
   }
 })

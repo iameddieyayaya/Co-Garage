@@ -41,5 +41,10 @@ class StripeConnectService
       stripe_details_submitted: !!stripe_account.details_submitted
     )
   end
-end
 
+  def self.express_login_link(stripe_account_id:)
+    raise Stripe::AuthenticationError.new("Stripe is not configured") if Stripe.api_key.blank?
+
+    Stripe::Account.create_login_link(stripe_account_id)
+  end
+end

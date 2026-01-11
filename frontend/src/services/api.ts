@@ -192,6 +192,10 @@ export const stripeConnectAPI = {
     const response = await api.post<{ url: string }>('/stripe_connect/onboarding_link')
     return response.data
   },
+  loginLink: async (): Promise<{ url: string }> => {
+    const response = await api.post<{ url: string }>('/stripe_connect/login_link')
+    return response.data
+  },
 }
 
 export default api;

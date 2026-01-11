@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import Booking from './Booking'
+import { ToastProvider } from '../components/ToastProvider'
 
 jest.mock('../services/api', () => {
   return {
@@ -51,7 +52,11 @@ jest.mock('../services/api', () => {
 
 describe('Booking page', () => {
   it('lists shops and opens booking modal', async () => {
-    render(<Booking />)
+    render(
+      <ToastProvider>
+        <Booking />
+      </ToastProvider>
+    )
 
     expect(await screen.findByText("Alice's Garage")).toBeInTheDocument()
 

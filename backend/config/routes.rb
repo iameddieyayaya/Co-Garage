@@ -21,6 +21,7 @@ Rails.application.routes.draw do
       namespace :stripe_connect do
         post :create_account
         post :onboarding_link
+        post :login_link
         get :status
       end
 

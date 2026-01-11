@@ -20,5 +20,17 @@ RSpec.describe "Api::V1::StripeConnect", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.parsed_body["url"]).to eq("https://connect.test/onboarding")
   end
-end
 
+  it "returns a Stripe dashboard login link for a connected account" do
+    shop = Shop.create!(owner: owner, name: "Main Garage", location: "Austin, TX", active: true)
+    shop.update!(stripe_account_id: "acct_123")
+
+    Stripe.api_key = "sk_test_123"
+    allow(Stripe::Account).to receive(:create_login_link).and_return(OpenStruct.new(url: "https://connect.test/login"))
+
+    post "/api/v1/stripe_connect/login_link", headers: headers
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body["url"]).to eq("https://connect.test/login")
+  end
+end

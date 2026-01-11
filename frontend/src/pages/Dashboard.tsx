@@ -23,6 +23,11 @@ const Dashboard: React.FC = () => {
   const [checkoutBookingId, setCheckoutBookingId] = useState<number | null>(null);
   const [stripeStatus, setStripeStatus] = useState<null | Awaited<ReturnType<typeof stripeConnectAPI.status>>>(null)
 
+  const refreshStripeStatus = async () => {
+    const status = await stripeConnectAPI.status()
+    setStripeStatus(status)
+  }
+
   const refreshBays = async () => {
     const data = await baysAPI.list()
     setBays(data)
@@ -42,8 +47,19 @@ const Dashboard: React.FC = () => {
     refreshBays().catch(console.error)
     refreshTools().catch(console.error)
     refreshBookings().catch(console.error)
-    stripeConnectAPI.status().then(setStripeStatus).catch(() => setStripeStatus(null))
+    refreshStripeStatus().catch(() => setStripeStatus(null))
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("stripe") === "return" || params.get("stripe") === "refresh") {
+      refreshStripeStatus().catch(() => setStripeStatus(null))
+    }
+
+    const onFocus = () => refreshStripeStatus().catch(() => setStripeStatus(null))
+    window.addEventListener("focus", onFocus)
+    return () => window.removeEventListener("focus", onFocus)
+  }, [])
 
   const activeBaysCount = useMemo(() => {
     return bays.filter((b) => b.available === true).length
@@ -137,11 +153,21 @@ const Dashboard: React.FC = () => {
       await stripeConnectAPI.createAccount()
       const { url } = await stripeConnectAPI.onboardingLink()
       window.open(url, "_blank", "noopener,noreferrer")
-      const status = await stripeConnectAPI.status()
-      setStripeStatus(status)
+      await refreshStripeStatus()
     } catch (err) {
       console.error(err)
       const message = (err as any)?.response?.data?.error || "Failed to start Stripe onboarding"
+      alert(message)
+    }
+  }
+
+  const handleStripeDashboard = async () => {
+    try {
+      const { url } = await stripeConnectAPI.loginLink()
+      window.open(url, "_blank", "noopener,noreferrer")
+    } catch (err) {
+      console.error(err)
+      const message = (err as any)?.response?.data?.error || "Failed to open Stripe dashboard"
       alert(message)
     }
   }
@@ -455,11 +481,24 @@ const Dashboard: React.FC = () => {
               </p>
             </div>
             <div className="flex gap-3">
-              {stripeStatus?.ready_for_payouts ? (
+              {stripeStatus?.stripe_account_id ? (
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-200">
-                    Payouts enabled
+                  <span
+                    className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold ${
+                      stripeStatus?.ready_for_payouts
+                        ? "border-emerald-500/30 bg-emerald-500/20 text-emerald-200"
+                        : "border-yellow-500/30 bg-yellow-500/20 text-yellow-200"
+                    }`}
+                  >
+                    {stripeStatus?.ready_for_payouts ? "Payouts enabled" : "Stripe connected (setup incomplete)"}
                   </span>
+                  <button
+                    type="button"
+                    className="bg-gray-700 hover:bg-gray-600 text-white px-5 py-2 rounded-md font-semibold transition"
+                    onClick={handleStripeDashboard}
+                  >
+                    Stripe Dashboard
+                  </button>
                   <button
                     type="button"
                     className="bg-gray-700 hover:bg-gray-600 text-white px-5 py-2 rounded-md font-semibold transition"
@@ -479,9 +518,14 @@ const Dashboard: React.FC = () => {
               )}
             </div>
           </div>
-          {!stripeStatus?.ready_for_payouts && (
+          {!stripeStatus?.stripe_account_id && (
             <p className="text-xs text-gray-500 mt-3">
               Complete Stripe onboarding to enable payments and automatic deposits to your bank account.
+            </p>
+          )}
+          {stripeStatus?.stripe_account_id && !stripeStatus?.ready_for_payouts && (
+            <p className="text-xs text-gray-500 mt-3">
+              Finish Stripe onboarding to enable payouts. If you just completed it, refresh or return to this tab.
             </p>
           )}
         </div>

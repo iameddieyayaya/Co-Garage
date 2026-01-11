@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import Modal from '../components/Modal'
+import { useToast } from '../components/ToastProvider'
 import {
   bookingsAPI,
   publicBaysAPI,
@@ -39,7 +40,7 @@ export default function Booking() {
   const [selectedTools, setSelectedTools] = useState<ToolSelection>({})
   const [submitting, setSubmitting] = useState(false)
   const [modalError, setModalError] = useState<string | null>(null)
-  const [successId, setSuccessId] = useState<number | null>(null)
+  const toast = useToast()
 
   const selectedBay = useMemo(() => shopBays.find((b) => b.id === selectedBayId) ?? null, [shopBays, selectedBayId])
   const toolsById = useMemo(() => new Map(shopTools.map((t) => [t.id, t])), [shopTools])
@@ -59,7 +60,6 @@ export default function Booking() {
     setSelectedShop(shop)
     setModalOpen(true)
     setModalError(null)
-    setSuccessId(null)
     setSelectedTools({})
     setSelectedBayId(null)
     setSelectedDate('')
@@ -84,7 +84,6 @@ export default function Booking() {
     setShopBays([])
     setShopTools([])
     setModalError(null)
-    setSuccessId(null)
   }
 
   const hours = duration === 'full' ? 8 : 4
@@ -134,7 +133,6 @@ export default function Booking() {
 
   const submit = async () => {
     setModalError(null)
-    setSuccessId(null)
 
     if (!selectedShop) return setModalError('Please select a shop.')
     if (!selectedBayId) return setModalError('Please select a bay.')
@@ -159,14 +157,22 @@ export default function Booking() {
         tools: toolsPayload.length ? toolsPayload : undefined,
       })
 
-      setSuccessId(res?.id ?? null)
+      toast.success(`Request submitted${res?.id ? ` (ID #${res.id})` : ''}.`, 'Booking requested')
+      closeModal()
     } catch (err: any) {
       const message = err?.response?.data?.error || err?.response?.data?.errors?.[0] || 'Booking request failed.'
       setModalError(message)
+      toast.error(message, 'Booking failed')
     } finally {
       setSubmitting(false)
     }
   }
+
+  const inputClass =
+    'w-full rounded-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500'
+
+  const selectClass =
+    'w-full rounded-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white disabled:opacity-60'
 
   return (
     <div className="min-h-screen bg-black text-white pt-24">
@@ -245,27 +251,13 @@ export default function Booking() {
         actionText={submitting ? 'Submitting…' : 'Submit request'}
         onAction={submit}
         actionDisabled={submitting || loadingDetails}
-        panelClassName="sm:max-w-3xl"
+        panelClassName="sm:max-w-5xl"
       >
         <div className="text-sm text-gray-100">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <div>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+            <div className="min-w-0 lg:col-span-2">
               {modalError && (
                 <div className="mb-4 p-3 bg-red-900/20 border border-red-800 rounded-xl text-red-200">{modalError}</div>
-              )}
-              {successId && (
-                <div className="mb-4 p-3 bg-emerald-900/20 border border-emerald-800 rounded-xl text-emerald-200">
-                  Request submitted
-                  {successId ? (
-                    <>
-                      {' '}
-                      <span className="text-white font-semibold">(ID #{successId})</span>
-                    </>
-                  ) : (
-                    ''
-                  )}
-                  . We’ll contact you to confirm.
-                </div>
               )}
 
               <div className="space-y-4">
@@ -275,7 +267,7 @@ export default function Booking() {
                     value={selectedBayId ?? ''}
                     onChange={(e) => setSelectedBayId(e.target.value ? Number(e.target.value) : null)}
                     disabled={loadingDetails}
-                    className="w-full rounded-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                    className={selectClass}
                   >
                     <option value="">{loadingDetails ? 'Loading…' : 'Select a bay'}</option>
                     {shopBays.map((bay) => (
@@ -293,7 +285,7 @@ export default function Booking() {
                       type="date"
                       value={selectedDate}
                       onChange={(e) => setSelectedDate(e.target.value)}
-                      className="w-full rounded-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={`${inputClass} dark:[color-scheme:dark]`}
                     />
                   </div>
                   <div>
@@ -372,7 +364,7 @@ export default function Booking() {
                       value={guestName}
                       onChange={(e) => setGuestName(e.target.value)}
                       placeholder="Jane Doe"
-                      className="w-full rounded-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={inputClass}
                     />
                   </div>
                   <div>
@@ -382,7 +374,7 @@ export default function Booking() {
                       value={guestEmail}
                       onChange={(e) => setGuestEmail(e.target.value)}
                       placeholder="jane@example.com"
-                      className="w-full rounded-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={inputClass}
                     />
                   </div>
                 </div>
@@ -399,7 +391,7 @@ export default function Booking() {
               </div>
             </div>
 
-            <div>
+            <div className="min-w-0 lg:col-span-3">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-bold text-white">Tools</h3>
                 <p className="text-xs text-gray-300">{duration === 'full' ? 'Full day pricing' : 'Half day pricing'}</p>
@@ -423,25 +415,28 @@ export default function Booking() {
                     const checked = selectedTools[tool.id] !== undefined
                     const quantity = selectedTools[tool.id] ?? 1
                     return (
-                      <div key={tool.id} className="border border-gray-200 dark:border-gray-800 rounded-xl p-4 bg-white dark:bg-gray-900">
+                      <div
+                        key={tool.id}
+                        className="border border-gray-200 dark:border-gray-800 rounded-xl p-4 bg-white dark:bg-gray-900 overflow-hidden"
+                      >
                         <div className="flex items-start justify-between gap-3">
-                          <label className="flex items-start gap-3 cursor-pointer">
+                          <label className="flex items-start gap-3 cursor-pointer min-w-0">
                             <input
                               type="checkbox"
                               checked={checked}
                               onChange={() => toggleTool(tool.id)}
                               className="mt-1 h-4 w-4 accent-blue-500"
                             />
-                            <div>
+                            <div className="min-w-0">
                               <div className="font-semibold text-gray-900 dark:text-white">{tool.name}</div>
-                              {tool.description && <div className="text-xs text-gray-300 mt-1">{tool.description}</div>}
-                              <div className="text-xs text-gray-300 mt-2">
+                              {tool.description && <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">{tool.description}</div>}
+                              <div className="text-xs text-gray-600 dark:text-gray-300 mt-2">
                                 ${toNumber(tool.day_rate).toFixed(2)}/day • billed {duration === 'full' ? 'full' : 'half'} day
                               </div>
                             </div>
                           </label>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 shrink-0">
                             <button
                               type="button"
                               disabled={!checked || quantity <= 1}
@@ -456,7 +451,7 @@ export default function Booking() {
                               value={quantity}
                               disabled={!checked}
                               onChange={(e) => setToolQuantity(tool.id, Math.max(1, parseInt(e.target.value || '1', 10)))}
-                              className="w-14 text-center rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-gray-700 py-2 disabled:opacity-40"
+                              className="w-12 text-center rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-gray-700 py-2 text-gray-900 dark:text-white disabled:opacity-40"
                             />
                             <button
                               type="button"

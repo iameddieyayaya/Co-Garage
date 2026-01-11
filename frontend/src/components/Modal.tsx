@@ -13,6 +13,10 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, actionText = "Close", onAction, actionDisabled = false, panelClassName }) => {
+	const hasMaxWidthOverride =
+		/\b(?:max-w-|sm:max-w-|md:max-w-|lg:max-w-|xl:max-w-|2xl:max-w-)/.test(panelClassName || "");
+	const defaultMaxWidthClass = hasMaxWidthOverride ? "" : "sm:max-w-md";
+
 	return (
 		<Dialog open={isOpen} onClose={onClose} className="relative z-50">
 			{/* Overlay */}
@@ -22,7 +26,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, actionT
 			<div className="fixed inset-0 overflow-y-auto">
 				<div className="min-h-full flex items-end justify-center p-4 text-center sm:items-center">
 				<DialogPanel
-					className={`relative transform rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-6 dark:bg-gray-800 dark:outline dark:-outline-offset-1 dark:outline-white/10 flex flex-col max-h-[calc(100vh-2rem)] ${
+					className={`relative transform rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full ${defaultMaxWidthClass} sm:p-6 dark:bg-gray-800 dark:outline dark:-outline-offset-1 dark:outline-white/10 flex flex-col max-h-[calc(100vh-2rem)] ${
 						panelClassName || ""
 					}`}
 				>

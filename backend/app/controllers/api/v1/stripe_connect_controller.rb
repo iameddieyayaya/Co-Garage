@@ -44,6 +44,17 @@ module Api
       rescue Stripe::AuthenticationError
         render json: { error: "Stripe is not configured. Set STRIPE_SECRET_KEY (or credentials stripe.secret_key)." }, status: :internal_server_error
       end
+
+      def login_link
+        shop = current_user.shop
+        return render json: { error: "No shop found for this user" }, status: :unprocessable_content unless shop
+        return render json: { error: "Stripe account not created" }, status: :unprocessable_content if shop.stripe_account_id.blank?
+
+        link = StripeConnectService.express_login_link(stripe_account_id: shop.stripe_account_id)
+        render json: { url: link.url }, status: :ok
+      rescue Stripe::AuthenticationError
+        render json: { error: "Stripe is not configured. Set STRIPE_SECRET_KEY (or credentials stripe.secret_key)." }, status: :internal_server_error
+      end
     end
   end
 end
