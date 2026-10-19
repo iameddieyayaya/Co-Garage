@@ -63,5 +63,51 @@ RSpec.describe "Api::V1::Bookings", type: :request do
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.parsed_body["error"]).to eq("Bay is already booked for that time")
     end
+    it "rejects an unavailable bay without creating a booking" do
+      owner = User.create!(email: "unavailable@example.com", password: "password123", role: :shop_owner)
+      shop = Shop.create!(owner: owner, name: "Closed Garage", location: "Austin, TX")
+      bay = shop.bays.create!(description: "Unavailable bay", hourly_rate: 30, available: false)
+
+      post "/api/v1/bookings",
+           params: {
+             booking: {
+               bay_id: bay.id,
+               guest_name: "Jane Doe",
+               guest_email: "jane@example.com",
+               rental_date: "2026-01-05",
+               duration: "half",
+               slot: "morning"
+             }
+           }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(Booking.count).to eq(0)
+    end
+
+    it "rejects a tool from another shop without persisting a partial booking" do
+      owner = User.create!(email: "owner3@example.com", password: "password123", role: :shop_owner)
+      other_owner = User.create!(email: "owner4@example.com", password: "password123", role: :shop_owner)
+      shop = Shop.create!(owner: owner, name: "Main Garage", location: "Austin, TX")
+      other_shop = Shop.create!(owner: other_owner, name: "Other Garage", location: "Austin, TX")
+      bay = shop.bays.create!(description: "Lift bay", hourly_rate: 30, available: true)
+      tool = other_shop.tools.create!(name: "Other shop tool", day_rate: 10, available: true)
+
+      post "/api/v1/bookings",
+           params: {
+             booking: {
+               bay_id: bay.id,
+               guest_name: "Jane Doe",
+               guest_email: "jane@example.com",
+               rental_date: "2026-01-05",
+               duration: "half",
+               slot: "morning",
+               tools: [{ tool_id: tool.id, quantity: 1 }]
+             }
+           }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body["error"]).to eq("Tool must belong to the same shop")
+      expect(Booking.count).to eq(0)
+    end
   end
 end

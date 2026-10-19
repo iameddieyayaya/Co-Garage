@@ -83,6 +83,20 @@ The API will be available at `http://localhost:3000`
 
 The frontend will be available at `http://localhost:5173`
 
+## Production configuration
+
+Production requires:
+
+- `SECRET_KEY_BASE` or Rails credentials containing `secret_key_base`. The development JWT fallback is disabled in production.
+- `DATABASE_HOST`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD` for the PostgreSQL connection in `backend/config/database.yml`.
+- `FRONTEND_BASE_URL`, the public frontend origin (for example, `https://cogarage.example`). It is used for Stripe Checkout and Connect return URLs.
+- `STRIPE_SECRET_KEY` (or credentials containing `stripe.secret_key`) and `STRIPE_WEBHOOK_SECRET`. Configure Stripe to send `checkout.session.completed` and `account.updated` events to `/api/v1/stripe/webhook`; unsigned events are rejected.
+- `SMTP_ADDRESS` and the applicable SMTP settings (`SMTP_PORT`, `SMTP_DOMAIN`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH`, and `SMTP_STARTTLS`) for booking payment emails. Email delivery is disabled when `SMTP_ADDRESS` is unset.
+
+`PLATFORM_FEE_PERCENT` defaults to `10`. Keep secrets in the deployment environment or Rails credentials; never commit `.env` or secret values.
+
+Build the frontend with `cd frontend && npm run build`. Serve its `dist/` assets and route `/api/v1` requests to Rails under the same public origin; the frontend uses relative `/api/v1` URLs. Production CORS permits only `FRONTEND_BASE_URL`. Set `RAILS_SERVE_STATIC_FILES=true` only when Rails should serve files from `public/`. Use HTTPS for the public origin and Stripe webhook.
+
 ## Development Workflow
 
 1. Start PostgreSQL (if not running as a service)

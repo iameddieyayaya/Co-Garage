@@ -6,10 +6,8 @@ class NoopResizeObserver {
   disconnect() {}
 }
 
-// @ts-expect-error - test environment polyfill
 globalThis.ResizeObserver = globalThis.ResizeObserver || NoopResizeObserver
 
-// @ts-expect-error - test environment polyfill
 globalThis.matchMedia =
   globalThis.matchMedia ||
   (() => ({

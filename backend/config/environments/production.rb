@@ -1,4 +1,5 @@
 require "active_support/core_ext/integer/time"
+require "uri"
 
 Rails.application.configure do
   config.cache_classes = true
@@ -9,7 +10,11 @@ Rails.application.configure do
   config.log_formatter = ::Logger::Formatter.new
   config.log_level = :info
 
-  config.action_mailer.default_url_options = { host: ENV.fetch("FRONTEND_BASE_URL", "http://localhost:5173") }
+  frontend_uri = URI.parse(ENV.fetch("FRONTEND_BASE_URL"))
+  config.action_mailer.default_url_options = { host: frontend_uri.host, protocol: frontend_uri.scheme }
+  unless frontend_uri.is_a?(URI::HTTPS) && frontend_uri.host.present?
+    raise ArgumentError, "FRONTEND_BASE_URL must be an HTTPS origin in production"
+  end
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.perform_deliveries = ENV["SMTP_ADDRESS"].present?
   config.action_mailer.raise_delivery_errors = false

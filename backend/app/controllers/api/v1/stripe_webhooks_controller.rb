@@ -7,12 +7,9 @@ module Api
         payload = request.raw_post
         sig_header = request.headers["Stripe-Signature"]
         webhook_secret = ENV["STRIPE_WEBHOOK_SECRET"]
+        return head :bad_request if webhook_secret.blank?
 
-        event = if webhook_secret.present?
-          Stripe::Webhook.construct_event(payload, sig_header, webhook_secret)
-        else
-          Stripe::Event.construct_from(JSON.parse(payload, symbolize_names: true))
-        end
+        event = Stripe::Webhook.construct_event(payload, sig_header, webhook_secret)
 
         case event.type
         when "checkout.session.completed"

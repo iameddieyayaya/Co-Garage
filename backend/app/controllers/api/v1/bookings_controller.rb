@@ -59,26 +59,25 @@ module Api
             next if tool_id.blank?
 
             if quantity <= 0
-              raise ActiveRecord::Rollback, "Invalid tool quantity"
+              raise ArgumentError, "Invalid tool quantity"
             end
 
             tool = Tool.find_by(id: tool_id)
-            raise ActiveRecord::Rollback, "Tool not found" unless tool
-            raise ActiveRecord::Rollback, "Tool not available" unless tool.available?
-            raise ActiveRecord::Rollback, "Tool must belong to the same shop" unless tool.shop_id == bay.shop_id
+            raise ArgumentError, "Tool not found" unless tool
+            raise ArgumentError, "Tool not available" unless tool.available?
+            raise ArgumentError, "Tool must belong to the same shop" unless tool.shop_id == bay.shop_id
 
             booking.booking_tools.create!(tool: tool, quantity: quantity)
           end
-        rescue ActiveRecord::RecordInvalid => e
-          return render json: { errors: e.record.errors.full_messages }, status: :unprocessable_content
-        rescue ActiveRecord::Rollback => e
-          return render json: { error: e.message }, status: :unprocessable_content
         end
 
         render json: booking.as_json(include: { booking_tools: { include: { tool: { only: [:id, :name, :description, :day_rate] } }, only: [:quantity] } }),
                status: :created
+      rescue ActiveRecord::RecordInvalid => e
+        render json: { errors: e.record.errors.full_messages }, status: :unprocessable_content
       rescue ArgumentError => e
         render json: { error: e.message }, status: :unprocessable_content
+
       end
 
       def accept
