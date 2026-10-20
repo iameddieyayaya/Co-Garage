@@ -75,6 +75,34 @@ RSpec.describe "Api::V1::Stripe flow", type: :request do
     expect(email.body.encoded).to include("https://checkout.test/session")
   end
 
+  it "does not report or persist an invoice when email delivery is disabled" do
+    shop = Shop.create!(owner: owner, name: "Main Garage", location: "Austin, TX")
+    shop.update!(stripe_account_id: "acct_123", stripe_charges_enabled: true, stripe_payouts_enabled: true)
+    bay = shop.bays.create!(description: "Lift bay", hourly_rate: 30, available: true)
+    booking = Booking.create!(
+      bay: bay,
+      user: nil,
+      guest_name: "Jane Doe",
+      guest_email: "jane@example.com",
+      start_time: Time.zone.local(2026, 1, 5, 9, 0, 0),
+      end_time: Time.zone.local(2026, 1, 5, 13, 0, 0),
+      total_price: 120,
+      status: :pending
+    )
+
+    Stripe.api_key = "sk_test_123"
+    allow(BookingMailer).to receive(:perform_deliveries).and_return(false)
+    allow(Stripe::Checkout::Session).to receive(:create)
+      .and_return(OpenStruct.new(id: "cs_test_123", url: "https://checkout.test/session"))
+    expect(BookingMailer).not_to receive(:payment_link)
+
+    patch "/api/v1/bookings/#{booking.id}/accept", headers: headers
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body["email_sent"]).to eq(false)
+    expect(booking.reload).to have_attributes(status: "accepted", payment_status: "unpaid")
+  end
+
   it "returns 422 when shop is not ready for payouts" do
     shop = Shop.create!(owner: owner, name: "Main Garage", location: "Austin, TX")
     shop.update!(stripe_account_id: "acct_123", stripe_charges_enabled: true, stripe_payouts_enabled: false)
@@ -243,6 +271,50 @@ RSpec.describe "Api::V1::Stripe flow", type: :request do
     expect(booking.payment_status).to eq("paid")
     expect(booking.stripe_payment_intent_id).to eq("pi_test_123")
   end
+
+  it "ignores a signed Checkout completion for a different session" do
+    shop = Shop.create!(owner: owner, name: "Main Garage", location: "Austin, TX")
+    bay = shop.bays.create!(description: "Lift bay", hourly_rate: 30, available: true)
+    booking = Booking.create!(
+      bay: bay,
+      user: nil,
+      guest_name: "Jane Doe",
+      guest_email: "jane@example.com",
+      start_time: Time.zone.local(2026, 1, 5, 9, 0, 0),
+      end_time: Time.zone.local(2026, 1, 5, 13, 0, 0),
+      total_price: 120,
+      status: :accepted,
+      stripe_payment_id: "cs_expected"
+    )
+    payload = { type: "checkout.session.completed" }.to_json
+    event = OpenStruct.new(
+      type: "checkout.session.completed",
+      data: OpenStruct.new(
+        object: OpenStruct.new(
+          id: "cs_unrelated",
+          payment_intent: "pi_unrelated",
+          metadata: OpenStruct.new(booking_id: booking.id)
+        )
+      )
+    )
+
+    with_env("STRIPE_WEBHOOK_SECRET" => "whsec_test") do
+      allow(Stripe::Webhook).to receive(:construct_event).and_return(event)
+      post "/api/v1/stripe/webhook",
+           params: payload,
+           headers: { "CONTENT_TYPE" => "application/json", "Stripe-Signature" => "valid-signature" }
+    end
+
+    expect(response).to have_http_status(:ok)
+    expect(booking.reload).to have_attributes(
+      status: "accepted",
+      payment_status: "unpaid",
+      paid: false,
+      stripe_payment_id: "cs_expected",
+      stripe_payment_intent_id: nil
+    )
+  end
+
 
   it "rejects unsigned payment events when no webhook secret is configured" do
     shop = Shop.create!(owner: owner, name: "Main Garage", location: "Austin, TX")

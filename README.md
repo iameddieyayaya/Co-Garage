@@ -113,7 +113,10 @@ Build the frontend with `cd frontend && npm run build`. Serve its `dist/` assets
 - User authentication (shop owner / renter roles)
 - Automotive shop CRUD operations
 - Bay listing with availability
-- Booking system
+- Responsive owner operations dashboard with date-stamped booking requests, active bay/tool counts, Stripe payout status, and quick inventory actions. Booking history and payment-link workflows remain available from the booking desk.
+- Guest booking form with half/full-day selection, optional tool quantities, and an itemized estimate. The responsive dialog keeps the request action visible; payment follows shop confirmation.
+- Shop discovery on Book a Shop: case-insensitive name/location search, an optional maximum starting hourly rate, and an available-bays-only filter. Filters combine, preserve listing order, and can be cleared when no shops match. These summary filters do not check date-specific availability.
+- Logged-out Features and How It Works navigation opens the matching Home section from any route, with smooth scrolling below the fixed navbar. Direct section links (`/#features`, `/#how-it-works`) and browser back/forward navigation are supported.
 - Pricing per hour
 
 ## Future Features
@@ -123,7 +126,7 @@ Build the frontend with `cd frontend && npm run build`. Serve its `dist/` assets
 - Stripe Connect payout history for shop owners
 - Automated reminders (email/SMS) for upcoming bookings
 - Reviews and ratings for shops and bays
-- Search, filters, and saved searches
+- Saved searches
 
 ## App Demo Photos
 

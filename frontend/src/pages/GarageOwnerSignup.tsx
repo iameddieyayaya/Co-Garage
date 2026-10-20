@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { userApi } from "../services/api";
-
+import axios from "axios";
+import { useAuth } from "../contexts/AuthContext";
 const GarageOwnerSignup: React.FC = () => {
   const navigate = useNavigate();
+  const { register } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -31,11 +32,14 @@ const GarageOwnerSignup: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await userApi.signup(formData);
-      navigate("/dashboard");
-    } catch (error: any) {
-      if (error.response?.data?.errors) {
-        setErrors(error.response.data.errors);
+      await register(formData.email, formData.password, "shop_owner", formData.name);
+      navigate("/onboarding/shop");
+    } catch (error: unknown) {
+      const responseData = axios.isAxiosError(error) ? error.response?.data : undefined;
+      if (responseData && typeof responseData === "object" && "errors" in responseData && Array.isArray(responseData.errors)) {
+        setErrors(responseData.errors.map(String));
+      } else if (responseData && typeof responseData === "object" && "error" in responseData && typeof responseData.error === "string") {
+        setErrors([responseData.error]);
       } else {
         setErrors(["Something went wrong. Please try again."]);
       }

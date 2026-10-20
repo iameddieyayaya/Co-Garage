@@ -18,25 +18,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-export interface SignupData {
-  name: string;
-  email: string;
-  password: string;
-}
-
-export interface SignupResponse {
-  user: User;
-}
-
-export const userApi = {
-  signup: async (data: SignupData): Promise<SignupResponse> => {
-    const response = await api.post<SignupResponse>('/users', {
-      user: data,
-    });
-    return response.data;
-  },
-};
-
 export const authAPI = {
   login: async (email: string, password: string) => {
     const response = await api.post('/auth/login', { email, password });
@@ -152,8 +133,8 @@ export const bookingsAPI = {
     const response = await api.get<Booking[]>('/bookings')
     return response.data
   },
-  accept: async (id: number): Promise<{ checkout_url: string; booking: Booking }> => {
-    const response = await api.patch<{ checkout_url: string; booking: Booking }>(`/bookings/${id}/accept`)
+  accept: async (id: number): Promise<{ checkout_url: string; booking: Booking; email_sent: boolean }> => {
+    const response = await api.patch<{ checkout_url: string; booking: Booking; email_sent: boolean }>(`/bookings/${id}/accept`)
     return response.data
   },
   decline: async (id: number): Promise<Booking> => {

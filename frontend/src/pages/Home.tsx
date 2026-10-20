@@ -1,7 +1,15 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
 const Home: React.FC = () => {
+    const { pathname, hash } = useLocation();
+
+    useEffect(() => {
+        if (pathname === '/' && (hash === '#features' || hash === '#how-it-works')) {
+            document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, [pathname, hash]);
+
     return (
         <div className="font-sans text-gray-100 bg-slate-900">
           {/* Hero */}
@@ -28,7 +36,7 @@ const Home: React.FC = () => {
           </section>
     
           {/* Features */}
-          <section id="features" className="max-w-7xl mx-auto px-4 py-24">
+          <section id="features" className="max-w-7xl mx-auto px-4 py-24 scroll-mt-24">
             <h3 className="text-4xl font-bold text-center text-blue-500 mb-16">Why CoGarage?</h3>
             <div className="grid md:grid-cols-3 gap-12">
               <div className="bg-gray-800 p-6 rounded-2xl shadow-lg hover:shadow-blue-500 transition transform hover:-translate-y-2">
@@ -62,7 +70,7 @@ const Home: React.FC = () => {
           </section>
     
           {/* How it Works */}
-          <section id="how-it-works" className="bg-slate-900 py-24">
+          <section id="how-it-works" className="bg-slate-900 py-24 scroll-mt-24">
             <div className="max-w-6xl mx-auto px-4 text-center">
               <h3 className="text-4xl font-bold text-blue-500 mb-12">How It Works</h3>
               <div className="grid md:grid-cols-3 gap-10">

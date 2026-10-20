@@ -24,6 +24,26 @@ export default function Booking() {
   const [shops, setShops] = useState<PublicShop[]>([])
   const [loadingShops, setLoadingShops] = useState(true)
   const [shopsError, setShopsError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [maximumRate, setMaximumRate] = useState('')
+  const [availableBaysOnly, setAvailableBaysOnly] = useState(false)
+
+  const visibleShops = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    const maximum = Number(maximumRate)
+    const hasMaximum = maximumRate.trim() !== '' && Number.isFinite(maximum) && maximum >= 0
+
+    return shops.filter((shop) => {
+      if (query && !shop.name.toLowerCase().includes(query) && !shop.location.toLowerCase().includes(query)) return false
+      if (availableBaysOnly && shop.available_bays_count <= 0) return false
+      if (hasMaximum) {
+        const value = shop.starting_hourly_rate
+        const rate = value === null || (typeof value === 'string' && value.trim() === '') ? NaN : Number(value)
+        if (!Number.isFinite(rate) || rate > maximum) return false
+      }
+      return true
+    })
+  }, [shops, searchQuery, maximumRate, availableBaysOnly])
 
   const [isModalOpen, setModalOpen] = useState(false)
   const [selectedShop, setSelectedShop] = useState<PublicShop | null>(null)
@@ -168,11 +188,6 @@ export default function Booking() {
     }
   }
 
-  const inputClass =
-    'w-full rounded-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500'
-
-  const selectClass =
-    'w-full rounded-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white disabled:opacity-60'
 
   return (
     <div className="min-h-screen bg-black text-white pt-24">
@@ -190,15 +205,64 @@ export default function Booking() {
           </div>
         </div>
 
+        <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 bg-zinc-950 border border-zinc-800 rounded-2xl p-5">
+          <label className="text-sm text-gray-300">
+            Search shops
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Shop name or location"
+              className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-white"
+            />
+          </label>
+          <label className="text-sm text-gray-300">
+            Maximum starting rate ($/hr)
+            <input
+              type="number"
+              min="0"
+              step="any"
+              value={maximumRate}
+              onChange={(event) => setMaximumRate(event.target.value)}
+              placeholder="No maximum"
+              className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-white"
+            />
+          </label>
+          <label className="flex items-center gap-3 text-sm text-gray-300">
+            <input
+              type="checkbox"
+              checked={availableBaysOnly}
+              onChange={(event) => setAvailableBaysOnly(event.target.checked)}
+              className="h-4 w-4 accent-blue-600"
+            />
+            Available bays only
+          </label>
+        </div>
+
         {shopsError && (
           <div className="mb-6 p-4 bg-red-900/20 border border-red-800 rounded-xl text-red-200">{shopsError}</div>
         )}
 
         {loadingShops ? (
           <div className="text-gray-400">Loading shops…</div>
+        ) : shops.length > 0 && visibleShops.length === 0 ? (
+          <div className="text-center bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
+            <p className="text-gray-300" role="status">No shops match your filters.</p>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('')
+                setMaximumRate('')
+                setAvailableBaysOnly(false)
+              }}
+              className="mt-4 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl font-bold"
+            >
+              Clear filters
+            </button>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {shops.map((shop) => {
+            {visibleShops.map((shop) => {
               const canBook = shop.available_bays_count > 0
               const startingRate = toNumber(shop.starting_hourly_rate)
               return (
@@ -251,229 +315,111 @@ export default function Booking() {
         actionText={submitting ? 'Submitting…' : 'Submit request'}
         onAction={submit}
         actionDisabled={submitting || loadingDetails}
-        panelClassName="sm:max-w-5xl"
+        panelClassName="booking-dialog sm:max-w-4xl"
       >
-        <div className="text-sm text-gray-100">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-            <div className="min-w-0 lg:col-span-2">
-              {modalError && (
-                <div className="mb-4 p-3 bg-red-900/20 border border-red-800 rounded-xl text-red-200">{modalError}</div>
-              )}
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-1 text-white">Bay</label>
-                  <select
-                    value={selectedBayId ?? ''}
-                    onChange={(e) => setSelectedBayId(e.target.value ? Number(e.target.value) : null)}
-                    disabled={loadingDetails}
-                    className={selectClass}
-                  >
-                    <option value="">{loadingDetails ? 'Loading…' : 'Select a bay'}</option>
-                    {shopBays.map((bay) => (
-                      <option key={bay.id} value={bay.id}>
-                        {bay.description} (${toNumber(bay.hourly_rate)}/hr)
-                      </option>
+        <button type="button" className="booking-close" onClick={closeModal} aria-label="Close booking form">×</button>
+        <div className="booking-intro">
+          <span>{selectedShop?.location}</span>
+          <span className="booking-guest">Guest booking · No account needed</span>
+        </div>
+        {modalError && <div className="booking-error" role="alert">{modalError}</div>}
+        <div className="booking-layout">
+          <div className="booking-details">
+            <section className="booking-section" aria-labelledby="booking-visit-heading">
+              <div className="booking-section-heading">
+                <h4 id="booking-visit-heading">Your time in the garage</h4>
+                <p>Choose a bay and make room for your next project.</p>
+              </div>
+              <label className="booking-field" htmlFor="booking-bay">Bay
+                <select id="booking-bay" value={selectedBayId ?? ''} onChange={(e) => setSelectedBayId(e.target.value ? Number(e.target.value) : null)} disabled={loadingDetails}>
+                  <option value="">{loadingDetails ? 'Loading bays…' : 'Select a bay'}</option>
+                  {shopBays.map((bay) => <option key={bay.id} value={bay.id}>{bay.description} (${toNumber(bay.hourly_rate)}/hr)</option>)}
+                </select>
+              </label>
+              <label className="booking-field" htmlFor="booking-date">Date
+                <input id="booking-date" type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
+              </label>
+              <fieldset className="booking-options">
+                <legend>Duration</legend>
+                <div className="booking-choice-row">
+                  {(['half', 'full'] as const).map((value) => (
+                    <button key={value} type="button" aria-pressed={duration === value} onClick={() => setDuration(value)} className="booking-choice">
+                      <span>{value === 'half' ? 'Half day' : 'Full day'}</span>
+                      <small>{value === 'half' ? '4 hours' : '8 hours'}</small>
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+              <fieldset className="booking-options">
+                <legend>Time at the shop</legend>
+                {duration === 'full' ? <div className="booking-full-day"><span>Full day</span><strong>9am–5pm</strong></div> : (
+                  <div className="booking-choice-row">
+                    {(['morning', 'afternoon'] as const).map((value) => (
+                      <button key={value} type="button" aria-pressed={slot === value} onClick={() => setSlot(value)} className="booking-choice">
+                        <span>{value === 'morning' ? 'Morning' : 'Afternoon'}</span>
+                        <small>{value === 'morning' ? '9am–1pm' : '1pm–5pm'}</small>
+                      </button>
                     ))}
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold mb-1 text-white">Date</label>
-                    <input
-                      type="date"
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                      className={`${inputClass} dark:[color-scheme:dark]`}
-                    />
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-1 text-white">Duration</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setDuration('half')}
-                        className={`rounded-xl border px-3 py-2 font-semibold transition ${
-                          duration === 'half'
-                            ? 'bg-blue-600 text-white border-blue-600'
-                            : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'
-                        }`}
-                      >
-                        Half day
-                        <div className="text-xs font-normal opacity-80">4 hours</div>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDuration('full')}
-                        className={`rounded-xl border px-3 py-2 font-semibold transition ${
-                          duration === 'full'
-                            ? 'bg-blue-600 text-white border-blue-600'
-                            : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'
-                        }`}
-                      >
-                        Full day
-                        <div className="text-xs font-normal opacity-80">8 hours</div>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-1 text-white">Time</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setSlot('morning')}
-                      disabled={duration === 'full'}
-                      className={`rounded-xl border px-3 py-2 font-semibold transition ${
-                        duration === 'full'
-                          ? 'bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-400 cursor-not-allowed'
-                          : slot === 'morning'
-                            ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-black dark:border-white'
-                            : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'
-                      }`}
-                    >
-                      Morning
-                      <div className="text-xs font-normal opacity-80">9am–1pm</div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSlot('afternoon')}
-                      disabled={duration === 'full'}
-                      className={`rounded-xl border px-3 py-2 font-semibold transition ${
-                        duration === 'full'
-                          ? 'bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-400 cursor-not-allowed'
-                          : slot === 'afternoon'
-                            ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-black dark:border-white'
-                            : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'
-                      }`}
-                    >
-                      Afternoon
-                      <div className="text-xs font-normal opacity-80">1pm–5pm</div>
-                    </button>
-                  </div>
-                  {duration === 'full' && <p className="text-xs text-gray-500 mt-2">Full-day bookings run 9am–5pm.</p>}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold mb-1 text-white">Your name</label>
-                    <input
-                      type="text"
-                      value={guestName}
-                      onChange={(e) => setGuestName(e.target.value)}
-                      placeholder="Jane Doe"
-                      className={inputClass}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-1 text-white">Email</label>
-                    <input
-                      type="email"
-                      value={guestEmail}
-                      onChange={(e) => setGuestEmail(e.target.value)}
-                      placeholder="jane@example.com"
-                      className={inputClass}
-                    />
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="font-semibold text-gray-900 dark:text-white">Estimated total</div>
-                    <div className="text-lg font-bold text-blue-600 dark:text-blue-400">${totalCost.toFixed(2)}</div>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Bay: ${bayCost.toFixed(2)} • Tools: ${toolsCost.toFixed(2)}
-                  </div>
-                </div>
+                )}
+              </fieldset>
+            </section>
+            <section className="booking-section booking-contact" aria-labelledby="booking-contact-heading">
+              <div className="booking-section-heading">
+                <h4 id="booking-contact-heading">Where can we reach you?</h4>
+                <p>The shop will send your confirmation and payment link here.</p>
               </div>
-            </div>
-
-            <div className="min-w-0 lg:col-span-3">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-bold text-white">Tools</h3>
-                <p className="text-xs text-gray-300">{duration === 'full' ? 'Full day pricing' : 'Half day pricing'}</p>
+              <div className="booking-contact-grid">
+                <label className="booking-field" htmlFor="booking-name">Your name
+                  <input id="booking-name" type="text" autoComplete="name" value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Jane Doe" />
+                </label>
+                <label className="booking-field" htmlFor="booking-email">Email address
+                  <input id="booking-email" type="email" autoComplete="email" value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} placeholder="jane@example.com" />
+                </label>
               </div>
-
-              {loadingDetails && (
-                <div className="text-sm text-gray-500 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
-                  Loading tools…
-                </div>
-              )}
-
-              {!loadingDetails && shopTools.length === 0 && (
-                <div className="text-sm text-gray-500 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
-                  No tools listed for this shop.
-                </div>
-              )}
-
-              {!loadingDetails && shopTools.length > 0 && (
-                <div className="space-y-3">
-                  {shopTools.map((tool) => {
-                    const checked = selectedTools[tool.id] !== undefined
-                    const quantity = selectedTools[tool.id] ?? 1
-                    return (
-                      <div
-                        key={tool.id}
-                        className="border border-gray-200 dark:border-gray-800 rounded-xl p-4 bg-white dark:bg-gray-900 overflow-hidden"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <label className="flex items-start gap-3 cursor-pointer min-w-0">
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => toggleTool(tool.id)}
-                              className="mt-1 h-4 w-4 accent-blue-500"
-                            />
-                            <div className="min-w-0">
-                              <div className="font-semibold text-gray-900 dark:text-white">{tool.name}</div>
-                              {tool.description && <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">{tool.description}</div>}
-                              <div className="text-xs text-gray-600 dark:text-gray-300 mt-2">
-                                ${toNumber(tool.day_rate).toFixed(2)}/day • billed {duration === 'full' ? 'full' : 'half'} day
-                              </div>
-                            </div>
-                          </label>
-
-                          <div className="flex items-center gap-2 shrink-0">
-                            <button
-                              type="button"
-                              disabled={!checked || quantity <= 1}
-                              onClick={() => setToolQuantity(tool.id, Math.max(1, quantity - 1))}
-                              className="h-9 w-9 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-950 disabled:opacity-40"
-                            >
-                              –
-                            </button>
-                            <input
-                              type="number"
-                              min={1}
-                              value={quantity}
-                              disabled={!checked}
-                              onChange={(e) => setToolQuantity(tool.id, Math.max(1, parseInt(e.target.value || '1', 10)))}
-                              className="w-12 text-center rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-gray-700 py-2 text-gray-900 dark:text-white disabled:opacity-40"
-                            />
-                            <button
-                              type="button"
-                              disabled={!checked}
-                              onClick={() => setToolQuantity(tool.id, quantity + 1)}
-                              className="h-9 w-9 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-950 disabled:opacity-40"
-                            >
-                              +
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-
-              <p className="text-xs text-gray-500 mt-4">
-                This submits a request. The shop will confirm availability and payment next.
-              </p>
-            </div>
+            </section>
           </div>
+          <aside className="booking-sidebar">
+            <section aria-labelledby="booking-tools-heading">
+              <div className="booking-tools-heading"><h4 id="booking-tools-heading">Equip your bay</h4><span>Optional</span></div>
+              <p className="booking-tools-caption">Add the tools you need. Prices are for your {duration === 'full' ? 'full' : 'half'} day.</p>
+              {loadingDetails && <p className="booking-empty" role="status">Loading tools…</p>}
+              {!loadingDetails && shopTools.length === 0 && <p className="booking-empty">No tools listed for this shop.</p>}
+              <div className="booking-tools">
+                {!loadingDetails && shopTools.map((tool) => {
+                  const checked = selectedTools[tool.id] !== undefined
+                  const quantity = selectedTools[tool.id] ?? 1
+                  return (
+                    <div key={tool.id} className={`booking-tool ${checked ? 'is-selected' : ''}`}>
+                      <label className="booking-tool-label">
+                        <input type="checkbox" checked={checked} onChange={() => toggleTool(tool.id)} />
+                        <span><strong>{tool.name}</strong>{tool.description && <small>{tool.description}</small>}</span>
+                        <span className="booking-tool-price">${(toNumber(tool.day_rate) * dayFactor).toFixed(2)}</span>
+                      </label>
+                      {checked && <div className="booking-tool-quantity">
+                        <span>Quantity</span>
+                        <div className="booking-stepper">
+                          <button type="button" aria-label={`Decrease ${tool.name} quantity`} disabled={quantity <= 1} onClick={() => setToolQuantity(tool.id, Math.max(1, quantity - 1))}>−</button>
+                          <input type="number" aria-label={`${tool.name} quantity`} min={1} value={quantity} onChange={(e) => setToolQuantity(tool.id, Math.max(1, parseInt(e.target.value || '1', 10)))} />
+                          <button type="button" aria-label={`Increase ${tool.name} quantity`} onClick={() => setToolQuantity(tool.id, quantity + 1)}>+</button>
+                        </div>
+                      </div>}
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+            <section className="booking-receipt" aria-labelledby="booking-estimate-heading">
+              <h4 id="booking-estimate-heading">Your estimate</h4>
+              <dl>
+                <div><dt>Bay rental <span>· {hours} hours</span></dt><dd>${bayCost.toFixed(2)}</dd></div>
+                <div><dt>Tool add-ons</dt><dd>${toolsCost.toFixed(2)}</dd></div>
+                <div className="booking-total"><dt>Estimated total</dt><dd aria-live="polite">${totalCost.toFixed(2)}</dd></div>
+              </dl>
+              <p>No payment due now</p>
+            </section>
+            <p className="booking-next">The shop will review your request and confirm availability before you pay.</p>
+          </aside>
         </div>
       </Modal>
     </div>

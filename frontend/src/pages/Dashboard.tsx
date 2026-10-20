@@ -21,6 +21,7 @@ const Dashboard: React.FC = () => {
   const [isCheckoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState("");
   const [checkoutBookingId, setCheckoutBookingId] = useState<number | null>(null);
+  const [checkoutEmailSent, setCheckoutEmailSent] = useState(false);
   const [stripeStatus, setStripeStatus] = useState<null | Awaited<ReturnType<typeof stripeConnectAPI.status>>>(null)
 
   const refreshStripeStatus = async () => {
@@ -139,6 +140,7 @@ const Dashboard: React.FC = () => {
       const res = await bookingsAPI.accept(bookingId)
       setCheckoutUrl(res.checkout_url)
       setCheckoutBookingId(bookingId)
+      setCheckoutEmailSent(res.email_sent)
       setCheckoutModalOpen(true)
       await refreshBookings()
     } catch (err) {
@@ -206,25 +208,18 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-gray-100">
-      {/* Navbar */}
-      <header className="bg-slate-900 border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 py-5 flex justify-between items-center">
-          <h1 className="text-2xl font-extrabold text-blue-500 tracking-widest">CoGarage</h1>
-          <nav className="space-x-6">
-            <Link to="/" className="hover:text-blue-500 font-semibold transition">
-              Home
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-12">
-        <div className="mb-8">
-          <h2 className="text-4xl font-bold text-blue-500 mb-2">Dashboard</h2>
-          <p className="text-gray-400">Welcome to your garage owner dashboard</p>
-        </div>
+    <div className="owner-dashboard">
+      <main className="owner-dashboard__main">
+        <header className="owner-dashboard__header">
+          <div>
+            <p className="owner-dashboard__eyebrow">CoGarage / Shop operations</p>
+            <h1>Your garage, <span>in gear.</span></h1>
+            <p className="owner-dashboard__intro">Review requests, keep your bays working, and manage your next booking.</p>
+          </div>
+          <button className="owner-dashboard__button owner-dashboard__button--primary" onClick={() => setBayModalOpen(true)}>
+            <span aria-hidden="true">＋</span> Add New Bay
+          </button>
+        </header>
 
         <Modal
           isOpen={isBayModalOpen}
@@ -431,7 +426,9 @@ const Dashboard: React.FC = () => {
           onAction={() => setCheckoutModalOpen(false)}
         >
           <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-            Share this Stripe Checkout link with the guest to complete payment for booking {checkoutBookingId ? `#${checkoutBookingId}` : ""}.
+            {checkoutEmailSent
+              ? `Payment link emailed to the guest for booking ${checkoutBookingId ? `#${checkoutBookingId}` : ""}.`
+              : `Payment link was not emailed. Copy it below and share it with the guest for booking ${checkoutBookingId ? `#${checkoutBookingId}` : ""}.`}
           </p>
           <input
             type="text"
@@ -456,150 +453,116 @@ const Dashboard: React.FC = () => {
           </button>
         </Modal>
 
-        {/* Stats Grid */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-gray-800 p-6 rounded-2xl shadow-lg">
-            <h3 className="text-lg font-semibold text-gray-300 mb-2">Total Bookings</h3>
-            <p className="text-3xl font-bold text-blue-500">{totalBookingsCount}</p>
+        <section className="owner-dashboard__metrics" aria-label="Garage overview">
+          <div>
+            <span className="owner-dashboard__metric-label">Booking history</span>
+            <p><strong>{totalBookingsCount}</strong><span>total bookings</span></p>
           </div>
-          <div className="bg-gray-800 p-6 rounded-2xl shadow-lg">
-            <h3 className="text-lg font-semibold text-gray-300 mb-2">Active Bays</h3>
-            <p className="text-3xl font-bold text-blue-500">{activeBaysCount}</p>
+          <div>
+            <span className="owner-dashboard__metric-label">Bay availability</span>
+            <p><strong>{activeBaysCount}<small> / {bays.length}</small></strong><span>active bays</span></p>
           </div>
-          <div className="bg-gray-800 p-6 rounded-2xl shadow-lg">
-            <h3 className="text-lg font-semibold text-gray-300 mb-2">Active Tools</h3>
-            <p className="text-3xl font-bold text-blue-500">{activeToolsCount}</p>
+          <div>
+            <span className="owner-dashboard__metric-label">Tool availability</span>
+            <p><strong>{activeToolsCount}<small> / {tools.length}</small></strong><span>active tools</span></p>
           </div>
-        </div>
+          <div className="owner-dashboard__pending-metric">
+            <span className="owner-dashboard__metric-label">Needs your review</span>
+            <p><strong>{pendingBookings.length}</strong><span>pending requests</span></p>
+          </div>
+        </section>
 
-        <div className="bg-gray-800 p-6 rounded-2xl shadow-lg mb-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div>
-              <h3 className="text-2xl font-bold text-blue-500">Payouts</h3>
-              <p className="text-gray-400 text-sm mt-1">
-                Platform fee: {stripeStatus?.platform_fee_percent ?? "10"}% • Earnings are paid out to your connected Stripe account.
-              </p>
+        <div className="owner-dashboard__workspace">
+          <section className="owner-dashboard__panel owner-dashboard__requests" aria-labelledby="requests-title">
+            <div className="owner-dashboard__section-heading">
+              <div>
+                <p className="owner-dashboard__eyebrow">Booking desk</p>
+                <h2 id="requests-title">Booking requests <span className="owner-dashboard__count">{pendingBookings.length}</span></h2>
+              </div>
+              <button className="owner-dashboard__text-button" onClick={() => setBookingsModalOpen(true)}>View Bookings <span aria-hidden="true">↗</span></button>
             </div>
-            <div className="flex gap-3">
+            <p className="owner-dashboard__section-description">Accept a request to create a payment link for your guest.</p>
+
+            {pendingBookings.length === 0 ? (
+              <div className="owner-dashboard__empty">
+                <span className="owner-dashboard__empty-icon" aria-hidden="true">✓</span>
+                <h3>You’re all caught up.</h3>
+                <p>No pending booking requests. New requests will appear here for review.</p>
+                <Link to="/book" className="owner-dashboard__text-button">Browse shop listings <span aria-hidden="true">↗</span></Link>
+              </div>
+            ) : (
+              <div className="owner-dashboard__queue">
+                {pendingBookings.map((b) => (
+                  <article key={b.id} className="owner-dashboard__ticket">
+                    <div className="owner-dashboard__ticket-date">
+                      <span>{new Date(b.start_time).toLocaleDateString(undefined, { month: "short" })}</span>
+                      <strong>{new Date(b.start_time).getDate()}</strong>
+                      <span>{new Date(b.start_time).toLocaleDateString(undefined, { weekday: "short" })}</span>
+                    </div>
+                    <div className="owner-dashboard__ticket-content">
+                      <div className="owner-dashboard__ticket-topline">
+                        <span className="owner-dashboard__request-id">Request #{b.id}</span>
+                        <span className="owner-dashboard__status">Pending review</span>
+                      </div>
+                      <h3>{b.bay?.description || `Bay #${b.bay_id}`}</h3>
+                      <p className="owner-dashboard__guest">{b.guest_name} <span>· {b.guest_email}</span></p>
+                      <p className="owner-dashboard__time">
+                        {new Date(b.start_time).toLocaleString()} — {new Date(b.end_time).toLocaleString()}
+                      </p>
+                      <div className="owner-dashboard__ticket-footer">
+                        <div className="owner-dashboard__price"><strong>${formatMoney(b.total_price)}</strong><span>Booking total</span></div>
+                        <div className="owner-dashboard__ticket-actions">
+                          <button className="owner-dashboard__button owner-dashboard__button--quiet" onClick={() => handleDeclineBooking(b.id)}>Decline</button>
+                          <button className="owner-dashboard__button owner-dashboard__button--primary" onClick={() => handleAcceptBooking(b.id)}>Accept &amp; Get Payment Link</button>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <aside className="owner-dashboard__sidebar">
+            <section className="owner-dashboard__panel owner-dashboard__payouts" aria-labelledby="payouts-title">
+              <p className="owner-dashboard__eyebrow">Payments & deposits</p>
+              <div className="owner-dashboard__section-heading">
+                <h2 id="payouts-title">Payouts</h2>
+                <span className={`owner-dashboard__connection ${stripeStatus?.ready_for_payouts ? "owner-dashboard__connection--ready" : ""}`}>
+                  <span aria-hidden="true">●</span> {stripeStatus?.ready_for_payouts ? "Enabled" : stripeStatus?.stripe_account_id ? "Setup incomplete" : "Not connected"}
+                </span>
+              </div>
+              <p className="owner-dashboard__section-description">
+                {stripeStatus?.ready_for_payouts
+                  ? "Earnings are paid out to your connected Stripe account."
+                  : "Complete Stripe onboarding to receive payments and automatic bank deposits."}
+              </p>
+              <div className="owner-dashboard__fee"><span>Platform fee</span><strong>{stripeStatus?.platform_fee_percent ?? "10"}<small>%</small></strong></div>
               {stripeStatus?.stripe_account_id ? (
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold ${
-                      stripeStatus?.ready_for_payouts
-                        ? "border-emerald-500/30 bg-emerald-500/20 text-emerald-200"
-                        : "border-yellow-500/30 bg-yellow-500/20 text-yellow-200"
-                    }`}
-                  >
-                    {stripeStatus?.ready_for_payouts ? "Payouts enabled" : "Stripe connected (setup incomplete)"}
-                  </span>
-                  <button
-                    type="button"
-                    className="bg-gray-700 hover:bg-gray-600 text-white px-5 py-2 rounded-md font-semibold transition"
-                    onClick={handleStripeDashboard}
-                  >
-                    Stripe Dashboard
-                  </button>
-                  <button
-                    type="button"
-                    className="bg-gray-700 hover:bg-gray-600 text-white px-5 py-2 rounded-md font-semibold transition"
-                    onClick={handleConnectStripe}
-                  >
-                    Manage Stripe
-                  </button>
+                <div className="owner-dashboard__payout-actions">
+                  <button className="owner-dashboard__button owner-dashboard__button--primary" onClick={handleStripeDashboard}>Stripe Dashboard <span aria-hidden="true">↗</span></button>
+                  <button className="owner-dashboard__text-button" onClick={handleConnectStripe}>Manage Stripe</button>
                 </div>
               ) : (
-                <button
-                  type="button"
-                  className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-md font-semibold transition shadow-sm"
-                  onClick={handleConnectStripe}
-                >
-                  Connect Stripe
-                </button>
+                <button className="owner-dashboard__button owner-dashboard__button--primary" onClick={handleConnectStripe}>Connect Stripe <span aria-hidden="true">↗</span></button>
               )}
-            </div>
-          </div>
-          {!stripeStatus?.stripe_account_id && (
-            <p className="text-xs text-gray-500 mt-3">
-              Complete Stripe onboarding to enable payments and automatic deposits to your bank account.
-            </p>
-          )}
-          {stripeStatus?.stripe_account_id && !stripeStatus?.ready_for_payouts && (
-            <p className="text-xs text-gray-500 mt-3">
-              Finish Stripe onboarding to enable payouts. If you just completed it, refresh or return to this tab.
-            </p>
-          )}
-        </div>
+              {stripeStatus?.stripe_account_id && !stripeStatus?.ready_for_payouts && (
+                <p className="owner-dashboard__footnote">Just finished setup? Return to this tab to refresh your payout status.</p>
+              )}
+            </section>
 
-        <div className="bg-gray-800 p-6 rounded-2xl shadow-lg mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-2xl font-bold text-blue-500">Booking Requests</h3>
-            <p className="text-sm text-gray-400">{pendingBookings.length} pending</p>
-          </div>
-
-          {pendingBookings.length === 0 ? (
-            <p className="text-gray-400">No pending booking requests.</p>
-          ) : (
-            <div className="space-y-4">
-              {pendingBookings.map((b) => (
-                <div key={b.id} className="bg-slate-900 border border-slate-700 rounded-xl p-4">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                    <div>
-                      <p className="text-sm text-gray-400">
-                        {b.guest_name} • {b.guest_email}
-                      </p>
-                      <p className="font-semibold">
-                        {b.bay?.description || `Bay #${b.bay_id}`} • ${Number(b.total_price || 0).toFixed(2)}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {new Date(b.start_time).toLocaleString()} → {new Date(b.end_time).toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="flex gap-3">
-	                      <button
-	                        className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-md font-semibold transition shadow-sm"
-	                        onClick={() => handleAcceptBooking(b.id)}
-	                      >
-	                        Accept & Get Payment Link
-	                      </button>
-                      <button
-                        className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md font-semibold transition"
-                        onClick={() => handleDeclineBooking(b.id)}
-                      >
-                        Decline
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-gray-800 p-6 rounded-2xl shadow-lg">
-          <h3 className="text-2xl font-bold text-blue-500 mb-4">Quick Actions</h3>
-          <div className="grid md:grid-cols-2 gap-4">
-	            <button className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-md font-semibold transition shadow-sm"
-	              onClick={() => setBayModalOpen(true)}
-	            >
-	              Add New Bay
-	            </button>
-	            <button
-	              className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-md font-semibold transition shadow-sm"
-	              onClick={() => setToolModalOpen(true)}
-	            >
-	              Add New Tool
-	            </button>
-            <button
-              className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-md font-semibold transition"
-              onClick={() => setBookingsModalOpen(true)}
-            >
-              View Bookings
-            </button>
-            <button className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-md font-semibold transition">
-              Manage Shop
-            </button>
-          </div>
+            <section className="owner-dashboard__panel owner-dashboard__inventory" aria-labelledby="inventory-title">
+              <p className="owner-dashboard__eyebrow">Make room for more</p>
+              <h2 id="inventory-title">Your shop</h2>
+              <p className="owner-dashboard__section-description">Keep your space and equipment ready to book.</p>
+              <button className="owner-dashboard__inventory-action" onClick={() => setToolModalOpen(true)}>
+                <span><strong>Add New Tool</strong><small>List equipment for your guests</small></span><span aria-hidden="true">＋</span>
+              </button>
+              <Link to="/book" className="owner-dashboard__inventory-action">
+                <span><strong>Browse shop listings</strong><small>Explore the guest booking experience</small></span><span aria-hidden="true">↗</span>
+              </Link>
+            </section>
+          </aside>
         </div>
       </main>
     </div>

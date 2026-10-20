@@ -97,14 +97,8 @@ module Api
 
         booking.update!(stripe_payment_id: session.id, status: :accepted, accepted_at: Time.zone.now)
 
-        email_sent = false
-        begin
-          BookingMailer.payment_link(booking: booking, checkout_url: session.url).deliver_now
-          booking.update!(payment_status: :invoice_sent)
-          email_sent = true
-        rescue StandardError => e
-          Rails.logger.warn("Failed to send booking payment email for booking=#{booking.id}: #{e.class} #{e.message}")
-        end
+        email_sent = deliver_payment_link(booking, session.url)
+        booking.update!(payment_status: :invoice_sent) if email_sent
 
         render json: { checkout_url: session.url, booking: booking, email_sent: email_sent }, status: :ok
       rescue Stripe::AuthenticationError
@@ -124,10 +118,10 @@ module Api
         checkout_url = BookingPaymentService.new(booking).checkout_url_from_session_id
         return render json: { error: "No invoice session found" }, status: :unprocessable_content if checkout_url.blank?
 
-        BookingMailer.payment_link(booking: booking, checkout_url: checkout_url).deliver_now
-        booking.update!(payment_status: :invoice_sent)
+        email_sent = deliver_payment_link(booking, checkout_url)
+        booking.update!(payment_status: :invoice_sent) if email_sent
 
-        render json: { email_sent: true }, status: :ok
+        render json: { email_sent: email_sent }, status: :ok
       rescue Stripe::AuthenticationError
         render json: { error: "Stripe is not configured. Set STRIPE_SECRET_KEY (or credentials stripe.secret_key)." }, status: :internal_server_error
       end
@@ -193,6 +187,16 @@ module Api
         Booking.joins(:bay).where(bays: { shop_id: shop.id }).find_by(id: params[:id])
       end
 
+
+      def deliver_payment_link(booking, checkout_url)
+        return false unless BookingMailer.perform_deliveries
+
+        BookingMailer.payment_link(booking: booking, checkout_url: checkout_url).deliver_now
+        true
+      rescue StandardError => e
+        Rails.logger.warn("Failed to send booking payment email for booking=#{booking.id}: #{e.class} #{e.message}")
+        false
+      end
       def build_times(rental_date:, duration:, slot:)
         date = Date.iso8601(rental_date.to_s)
         duration = duration.to_s

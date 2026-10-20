@@ -35,7 +35,7 @@ jest.mock('../services/api', () => {
           booking_tools: [],
         },
       ]),
-      accept: jest.fn(async () => ({ checkout_url: 'https://checkout.test/session', booking: {} })),
+      accept: jest.fn(async () => ({ checkout_url: 'https://checkout.test/session', booking: {}, email_sent: false })),
       decline: jest.fn(async () => ({})),
       resendInvoice: jest.fn(async () => ({ email_sent: true })),
       cancel: jest.fn(async () => ({})),
@@ -71,5 +71,18 @@ describe('Dashboard bookings', () => {
     expect(await screen.findByText('#1')).toBeInTheDocument()
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByText(/jane@example\.com/i)).toBeInTheDocument()
+  })
+
+  it('explains when the payment link must be shared manually', async () => {
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>
+    )
+
+    await userEvent.click(await screen.findByRole('button', { name: /accept & get payment link/i }))
+
+    expect(await screen.findByText(/payment link was not emailed/i)).toBeInTheDocument()
+    expect(screen.getByDisplayValue('https://checkout.test/session')).toBeInTheDocument()
   })
 })

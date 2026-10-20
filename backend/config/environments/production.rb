@@ -17,7 +17,7 @@ Rails.application.configure do
   end
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.perform_deliveries = ENV["SMTP_ADDRESS"].present?
-  config.action_mailer.raise_delivery_errors = false
+  config.action_mailer.raise_delivery_errors = true
 
   if ENV["SMTP_ADDRESS"].present?
     config.action_mailer.smtp_settings = {

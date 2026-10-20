@@ -30,13 +30,14 @@ module Api
         return if booking_id.blank?
 
         booking = Booking.find_by(id: booking_id)
-        return unless booking
+        return unless booking&.accepted?
+        return unless booking.stripe_payment_id == session.id
+        return if session.payment_intent.blank?
 
         booking.update!(
           paid: true,
           status: :paid,
           payment_status: :paid,
-          stripe_payment_id: session.id,
           stripe_payment_intent_id: session.payment_intent
         )
       end
