@@ -2,6 +2,8 @@
 # development, test). The code here should be idempotent so that it can be executed at any point in every environment.
 # The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
 
+abort "Demo seeds are only available in development and test" unless Rails.env.development? || Rails.env.test?
+
 puts "🌱 Seeding database..."
 
 # --- Users ---
@@ -15,7 +17,7 @@ end
 puts "✅ User: #{alice.email}"
 
 # --- Shops ---
-shop = Shop.find_or_create_by!(user: alice) do |s|
+shop = Shop.find_or_create_by!(owner: alice) do |s|
   s.name = "Alice’s Garage"
   s.location = "San Diego, CA"
   s.description = "DIY auto garage with rentable bays and tools."
@@ -57,14 +59,12 @@ puts "✅ Tools created for #{shop.name}"
 bay = shop.bays.first
 tool = shop.tools.first
 
-booking = Booking.create!(
-  bay: bay,
-  start_time: 1.day.from_now,
-  end_time: 1.day.from_now + 2.hours,
-  guest_name: "John Doe",
-  guest_email: "john@example.com",
-  total_price: bay.hourly_rate * 2
-)
+booking = Booking.find_or_create_by!(bay: bay, guest_email: "john@example.com") do |sample|
+  sample.start_time = 1.day.from_now
+  sample.end_time = sample.start_time + 2.hours
+  sample.guest_name = "John Doe"
+  sample.total_price = bay.hourly_rate * 2
+end
 
 # Rent a tool with the booking
 BookingTool.find_or_create_by!(booking: booking, tool: tool, quantity: 1)

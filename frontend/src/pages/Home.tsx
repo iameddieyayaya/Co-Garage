@@ -15,7 +15,7 @@ const Home: React.FC = () => {
           {/* Hero */}
           <section className="relative h-screen flex items-center justify-center text-center bg-black">
             <img
-              src={'../../images/hero.webp'}
+              src="/hero.webp"
               alt="Garage interior"
               className="absolute inset-0 w-full h-full object-cover opacity-40"
             />
@@ -41,16 +41,16 @@ const Home: React.FC = () => {
             <div className="grid md:grid-cols-3 gap-12">
               <div className="bg-gray-800 p-6 rounded-2xl shadow-lg hover:shadow-blue-500 transition transform hover:-translate-y-2">
                 <img
-                  src="../../images/work-in-bay.jpg"
+                  src="/work-in-bay.jpg"
                   alt="Lift bay"
                   className="rounded-lg mb-4 h-56 w-full object-cover"
                 />
                 <h4 className="text-2xl font-bold mb-2 text-blue-500">Flexible Bay Booking</h4>
-                <p className="text-gray-300">Reserve bays for any project—hourly, daily, or weekly. Work on your schedule.</p>
+                <p className="text-gray-300">Request a half-day or full-day bay rental for your next project.</p>
               </div>
               <div className="bg-gray-800 p-6 rounded-2xl shadow-lg hover:shadow-blue-500 transition transform hover:-translate-y-2">
                 <img
-                  src="../../images/tools.jpg"
+                  src="/tools.jpg"
                   alt="Tools"
                   className="rounded-lg mb-4 h-56 w-full object-cover"
                 />
@@ -59,12 +59,12 @@ const Home: React.FC = () => {
               </div>
               <div className="bg-gray-800 p-6 rounded-2xl shadow-lg hover:shadow-blue-500 transition transform hover:-translate-y-2">
                 <img
-                  src="../../images/happy-lady.jpg"
+                  src="/happy-lady.jpg"
                   alt="Safety"
                   className="rounded-lg mb-4 h-56 w-full object-cover"
                 />
                 <h4 className="text-2xl font-bold mb-2 text-blue-500">Safe & Secure</h4>
-                <p className="text-gray-300">All bookings are online and payment-secured. Your tools and projects are protected.</p>
+                <p className="text-gray-300">Request a booking online, then pay through Stripe after the shop confirms.</p>
               </div>
             </div>
           </section>
@@ -76,7 +76,7 @@ const Home: React.FC = () => {
               <div className="grid md:grid-cols-3 gap-10">
                 <div className="bg-gray-800 p-6 rounded-2xl shadow-lg hover:shadow-blue-500 transition transform hover:-translate-y-2">
                   <img
-                    src="../../images/autoshop.jpg"
+                    src="/autoshop.jpg"
                     alt="Browse bays"
                     className="rounded-lg mb-4 h-40 w-full object-cover"
                   />
@@ -85,16 +85,16 @@ const Home: React.FC = () => {
                 </div>
                 <div className="bg-gray-800 p-6 rounded-2xl shadow-lg hover:shadow-blue-500 transition transform hover:-translate-y-2">
                   <img
-                    src="../../images/work2.jpg"
+                    src="/work2.jpg"
                     alt="Pay online"
                     className="rounded-lg mb-4 h-40 w-full object-cover"
                   />
-                  <h4 className="text-xl font-bold mb-2 text-blue-500">2. Book & Pay</h4>
-                  <p className="text-gray-300">Reserve and pay instantly with our secure checkout.</p>
+                  <h4 className="text-xl font-bold mb-2 text-blue-500">2. Request & Pay</h4>
+                  <p className="text-gray-300">Send a booking request, then pay using the link provided after shop confirmation.</p>
                 </div>
                 <div className="bg-gray-800 p-6 rounded-2xl shadow-lg hover:shadow-blue-500 transition transform hover:-translate-y-2">
                   <img
-                    src="../../images/work.jpg"
+                    src="/work.jpg"
                     alt="Work on car"
                     className="rounded-lg mb-4 h-40 w-full object-cover"
                   />

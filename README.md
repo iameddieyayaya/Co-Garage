@@ -2,6 +2,10 @@
 
 A marketplace web application where automotive shops can list available service bays and individuals can browse, book, and rent them.
 
+Shop owners manage bays, tools, booking requests, and Stripe Connect onboarding. Guests browse active shops and request half-day or full-day rentals without an account; payment follows owner confirmation.
+
+This is an in-development portfolio project, not a production-ready payment platform. See [Known limitations](#known-limitations) before testing payments.
+
 ## Project Structure
 
 This is a monorepo containing:
@@ -28,10 +32,11 @@ This is a monorepo containing:
 
 Before you begin, ensure you have the following installed:
 
-- **Ruby 3.2.2** - Check with `ruby -v`
-- **PostgreSQL** - Check with `psql --version`
-- **Node.js 18+** - Check with `node -v`
-- **npm or yarn** - Check with `npm -v`
+- **Ruby 3.2.2** and **Bundler 2.7.2** (the versions pinned in `backend/`). Select the Ruby version before running `bundle install`; `ruby -v` must report `3.2.2`.
+- **PostgreSQL**, running locally. Development/test use a local socket and your operating-system username by default; that PostgreSQL role needs permission to create databases. If needed, an administrator can run `createuser --createdb "$USER"`. Use `PGUSER`, `PGPASSWORD`, and `PGHOST` for a different local connection.
+- **Node.js 22 LTS** and **npm**. The frontend lockfile is npm-managed.
+
+Clone the repository and run the commands below from its root. No Stripe keys or `.env` file are required to browse, sign in, or submit booking requests locally. Rails does not automatically load the root `.env`; export optional settings in the backend shell.
 
 ## Getting Started
 
@@ -47,19 +52,16 @@ Before you begin, ensure you have the following installed:
    bundle install
    ```
 
-3. Create the PostgreSQL database:
+3. Prepare the database and load demo data:
    ```bash
-   rails db:create
+   bundle exec rails db:prepare
+   bundle exec rails db:seed
    ```
+   Demo seeds are restricted to development/test and can be rerun without duplicating the sample records.
 
-4. Run database migrations (when available):
+4. Start the Rails server:
    ```bash
-   rails db:migrate
-   ```
-
-5. Start the Rails server:
-   ```bash
-   rails server
+   bundle exec rails server
    ```
 
 The API will be available at `http://localhost:3000`
@@ -73,7 +75,7 @@ The API will be available at `http://localhost:3000`
 
 2. Install Node.js dependencies:
    ```bash
-   npm install
+   npm ci
    ```
 
 3. Start the development server:
@@ -82,6 +84,31 @@ The API will be available at `http://localhost:3000`
    ```
 
 The frontend will be available at `http://localhost:5173`
+
+### Try the demo
+
+1. Open `http://localhost:5173/login` and sign in as `alice@example.com` with password `password123` (local demo credentials only).
+2. Inspect the owner dashboard, seeded bays, tools, and sample booking.
+3. Sign out and open **Book a Shop** to browse Alice's Garage and submit a guest request for a future date.
+4. Sign back in to review the request. Accepting it and generating a payment link requires Stripe test credentials and a connected shop with charges/payouts enabled. Development payment emails open through Letter Opener.
+
+Vite proxies `/api` to Rails on port 3000. Run both servers; frontend preview alone does not provide the API. If port 5173 is occupied, stop the conflicting process so the documented URLs remain consistent.
+
+### Checks
+
+```bash
+# From the repository root
+cd frontend
+npm run build
+npm test -- --runInBand
+npm run lint
+
+cd ../backend
+RAILS_ENV=test bundle exec rails db:create db:migrate
+bundle exec rspec
+```
+
+Frontend tests use Jest/Testing Library; backend model/request specs use RSpec and a separate PostgreSQL test database. Stripe request specs stub the external API; they do not prove live payment settlement.
 
 ## Production configuration
 
@@ -100,7 +127,7 @@ Build the frontend with `cd frontend && npm run build`. Serve its `dist/` assets
 ## Development Workflow
 
 1. Start PostgreSQL (if not running as a service)
-2. Start the backend server (Terminal 1): `cd backend && rails server`
+2. Start the backend server (Terminal 1): `cd backend && bundle exec rails server`
 3. Start the frontend dev server (Terminal 2): `cd frontend && npm run dev`
 4. Open your browser to `http://localhost:5173`
 
@@ -110,14 +137,23 @@ Build the frontend with `cd frontend && npm run build`. Serve its `dist/` assets
 
 ## Current Features
 
-- User authentication (shop owner / renter roles)
+- Shop-owner registration and JWT authentication; renters book as guests
 - Automotive shop CRUD operations
 - Bay listing with availability
-- Responsive owner operations dashboard with date-stamped booking requests, active bay/tool counts, Stripe payout status, and quick inventory actions. Booking history and payment-link workflows remain available from the booking desk.
-- Guest booking form with half/full-day selection, optional tool quantities, and an itemized estimate. The responsive dialog keeps the request action visible; payment follows shop confirmation.
-- Shop discovery on Book a Shop: case-insensitive name/location search, an optional maximum starting hourly rate, and an available-bays-only filter. Filters combine, preserve listing order, and can be cleared when no shops match. These summary filters do not check date-specific availability.
-- Logged-out Features and How It Works navigation opens the matching Home section from any route, with smooth scrolling below the fixed navbar. Direct section links (`/#features`, `/#how-it-works`) and browser back/forward navigation are supported.
-- Pricing per hour
+- Owner dashboard with booking review, inventory management, and Stripe payout status
+- Guest half/full-day requests with optional tools and an itemized estimate
+- Shop search by name/location, maximum starting hourly rate, and available bays
+- Home section links and responsive navigation
+- Bay hourly rates used to calculate half/full-day rental prices
+
+## Known limitations
+
+- Before using real money, review cancellation/refund handling: destination-charge refunds do not currently reverse shop transfers, and canceled unpaid bookings can retain payable Checkout links.
+- Public bay/tool endpoints and booking creation do not consistently enforce shop activation; booking requests also lack a server-side past-date check.
+- `npm run lint` currently fails on existing typing, mixed-indentation, and Fast Refresh issues. The frontend build and tests are separate checks.
+- Dependencies have known audit findings; review and update them before deployment. Do not run a forced audit upgrade without checking compatibility.
+- The pinned Ruby 3.2.2 runtime is end-of-life. Move to a supported Ruby release and rerun backend checks before deployment.
+- Some unused legacy controllers/pages remain, including an unrouted renter-registration page. The supported UI uses owner signup and guest booking.
 
 ## Future Features
 
@@ -140,6 +176,4 @@ Build the frontend with `cd frontend && npm run build`. Serve its `dist/` assets
 
 ## License
 
-This project is private and proprietary.
-
-# Co-Garage
+This project is private and proprietary. No open-source license is granted.
